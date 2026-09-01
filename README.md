@@ -97,13 +97,21 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Then set the credentials in `.env` to whatever step 2 left you with:
+The template ships with the credentials a default XAMPP or Laragon install
+uses — `root` with no password:
 
 ```
 DB_DATABASE=peopleportal
-DB_USERNAME=peopleportal   # or root, if you used the admin account
-DB_PASSWORD=               # blank is normal for XAMPP/Laragon root
+DB_USERNAME=root
+DB_PASSWORD=
 ```
+
+If that is your setup, there is nothing to change here. Otherwise replace them
+with whatever step 2 left you with — the dedicated `peopleportal` user and its
+password, or an admin account that has a password. On Linux you always have to
+change these: packaged MariaDB authenticates `root` by operating system user
+over a local socket, so `root` cannot log in over `DB_HOST=127.0.0.1` at all,
+with or without a password. Create the dedicated user and use that.
 
 Quote the password if it contains `#`, spaces or quotes — an unquoted `#` starts
 a comment. Verify the credentials before migrating:
@@ -128,7 +136,8 @@ whose data you want to keep.
 | `General error: 1 near "MODIFY": syntax error` | Running against SQLite. Check `DB_CONNECTION=mysql` in `.env`, then `php artisan config:clear`. |
 | `Unknown database 'peopleportal'` | Step 2 was skipped, or `DB_DATABASE` does not match the database you created. |
 | `Access denied ... (using password: NO)` | `DB_PASSWORD` is empty in `.env` but the account has a password. |
-| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist. |
+| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist. Confirm it with `sudo mysql -e "SELECT user, host FROM mysql.user"`, then re-run the `CREATE USER`/`GRANT` block from step 2. |
+| `Access denied for user 'root'@'localhost'` from the app on Linux | `root` is socket-authenticated there and cannot connect over TCP. Create the dedicated `peopleportal` user in step 2 and point `.env` at it. |
 | `Access denied for user 'root'@'localhost'` when opening the MySQL shell on Linux | Use `sudo mysql`, not `mysql -u root`. |
 | `'mysql' is not recognized` on Windows | Use the full path, e.g. `C:\xampp\mysql\bin\mysql -u root`. |
 | `Connection refused` | The MySQL service is not running. Start it from the XAMPP or Laragon control panel, or `sudo systemctl start mariadb` on Linux. |
