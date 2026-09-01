@@ -18,52 +18,101 @@ MySQL or MariaDB is required — SQLite will not work. Two migrations alter the
 `leaves` and `overtimes` status columns with raw MySQL DDL
 (`ALTER TABLE ... MODIFY COLUMN ... ENUM`), which SQLite cannot parse.
 
-**1. Install dependencies**
+### 1. Install dependencies
 
 ```bash
 composer install
 npm install
 ```
 
-**2. Create the database and its user**
+### 2. Create the database
 
-Pick a password and use the same one in both this step and step 3.
+`.env` only tells Laravel *how to connect* — it cannot create the database, and
+`php artisan migrate` will not create one either. So the database has to exist
+before you migrate. You need two things by the end of this step:
 
-```bash
-sudo mysql <<'SQL'
+- a database named `peopleportal`
+- a username and password that can access it
+
+Use whichever route below matches your setup. They all achieve the same thing.
+
+**Option A — with a GUI** (easiest if you would rather not use a terminal)
+
+Open the database tool you already have — phpMyAdmin (bundled with XAMPP and
+Laragon at <http://localhost/phpmyadmin>), TablePlus, MySQL Workbench, DBeaver
+or your IDE's database panel — then:
+
+1. Connect as the admin account (usually `root`).
+2. Create a new database named `peopleportal`.
+3. Set its collation to `utf8mb4_unicode_ci`.
+
+That is all you need. In step 3, use the same admin username and password you
+just connected with.
+
+**Option B — with the command line**
+
+First open a MySQL shell as an admin user. The command differs by platform:
+
+| Setup | Command |
+| --- | --- |
+| XAMPP (Windows) | `C:\xampp\mysql\bin\mysql -u root` |
+| Laragon (Windows) | `mysql -u root` |
+| macOS (Homebrew) | `mysql -u root` |
+| Linux (Fedora, Ubuntu, Debian) | `sudo mysql` |
+
+Linux is the odd one out: its packaged MariaDB authenticates `root` by operating
+system user rather than by password, so the shell has to be opened with `sudo`.
+On XAMPP and Laragon `root` has a blank password by default and `sudo` does not
+apply. If `mysql` is not a recognised command on Windows, use the full path from
+the XAMPP row, or open the shell from the Laragon menu.
+
+Then create the database:
+
+```sql
 CREATE DATABASE IF NOT EXISTS peopleportal
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+You can stop here and use your admin account in step 3 — fine for local
+development. To create a dedicated user instead, which is worth doing if the
+database is shared or reachable beyond your machine, also run:
+
+```sql
 CREATE USER IF NOT EXISTS 'peopleportal'@'localhost' IDENTIFIED BY 'CHANGE_ME';
 CREATE USER IF NOT EXISTS 'peopleportal'@'127.0.0.1' IDENTIFIED BY 'CHANGE_ME';
 GRANT ALL PRIVILEGES ON peopleportal.* TO 'peopleportal'@'localhost';
 GRANT ALL PRIVILEGES ON peopleportal.* TO 'peopleportal'@'127.0.0.1';
 FLUSH PRIVILEGES;
-SQL
 ```
 
-Both host entries are needed. `DB_HOST=127.0.0.1` connects over TCP, but MySQL
-resolves the loopback address back to the hostname `localhost` when matching
-grants, so an account created for only one of the two still gets access denied.
+Replace `CHANGE_ME` with a password of your own. Both host entries are needed:
+`DB_HOST=127.0.0.1` connects over TCP, but MySQL resolves the loopback address
+back to the hostname `localhost` when matching grants, so an account created for
+only one of the two still gets access denied.
 
-**3. Configure the app**
+### 3. Configure the app
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-Set `DB_PASSWORD` in `.env` to the password from step 2. `.env.example` already
-has the other `DB_*` values filled in; change `DB_DATABASE` / `DB_USERNAME` only
-if you used different names. Quote the password if it contains `#`, spaces or
-quotes — an unquoted `#` starts a comment.
+Then set the credentials in `.env` to whatever step 2 left you with:
 
-Verify the credentials before migrating:
-
-```bash
-mysql -h 127.0.0.1 -u peopleportal -p'CHANGE_ME' peopleportal -e "SELECT 1;"
+```
+DB_DATABASE=peopleportal
+DB_USERNAME=peopleportal   # or root, if you used the admin account
+DB_PASSWORD=               # blank is normal for XAMPP/Laragon root
 ```
 
-**4. Build the schema**
+Quote the password if it contains `#`, spaces or quotes — an unquoted `#` starts
+a comment. Verify the credentials before migrating:
+
+```bash
+php artisan db:show
+```
+
+### 4. Build the schema
 
 ```bash
 php artisan migrate:fresh --seed
@@ -77,9 +126,12 @@ whose data you want to keep.
 | Error | Cause |
 | --- | --- |
 | `General error: 1 near "MODIFY": syntax error` | Running against SQLite. Check `DB_CONNECTION=mysql` in `.env`, then `php artisan config:clear`. |
-| `Access denied ... (using password: NO)` | `DB_PASSWORD` is empty in `.env`. |
-| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist — re-run step 2. |
 | `Unknown database 'peopleportal'` | Step 2 was skipped, or `DB_DATABASE` does not match the database you created. |
+| `Access denied ... (using password: NO)` | `DB_PASSWORD` is empty in `.env` but the account has a password. |
+| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist. |
+| `Access denied for user 'root'@'localhost'` when opening the MySQL shell on Linux | Use `sudo mysql`, not `mysql -u root`. |
+| `'mysql' is not recognized` on Windows | Use the full path, e.g. `C:\xampp\mysql\bin\mysql -u root`. |
+| `Connection refused` | The MySQL service is not running. Start it from the XAMPP or Laragon control panel, or `sudo systemctl start mariadb` on Linux. |
 
 Config is cached separately from `.env`, so run `php artisan config:clear` after
 any change to `.env` that does not seem to take effect.
