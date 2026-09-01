@@ -10,7 +10,7 @@ employee regularization, with role-based access control.
 - PHP 8.2+ (tested on 8.5)
 - Composer
 - Node.js 20+
-- MySQL
+- MySQL or MariaDB (XAMPP and Laragon both bundle it)
 
 ## Setup
 
@@ -34,37 +34,27 @@ before you migrate. You need two things by the end of this step:
 - a database named `peopleportal`
 - a username and password that can access it
 
-Use whichever route below matches your setup. They all achieve the same thing.
+On XAMPP and Laragon `root` already exists with a blank password, so all you
+have to do is create the database.
 
-**Option A — with a GUI** (easiest if you would rather not use a terminal)
+**Option A — with phpMyAdmin** (easiest; bundled with both XAMPP and Laragon)
 
-Open the database tool you already have — phpMyAdmin (bundled with XAMPP and
-Laragon at <http://localhost/phpmyadmin>), TablePlus, MySQL Workbench, DBeaver
-or your IDE's database panel — then:
+1. Start MySQL from the XAMPP or Laragon control panel.
+2. Open <http://localhost/phpmyadmin> and connect as `root`.
+3. Create a new database named `peopleportal`.
+4. Set its collation to `utf8mb4_unicode_ci`.
 
-1. Connect as the admin account (usually `root`).
-2. Create a new database named `peopleportal`.
-3. Set its collation to `utf8mb4_unicode_ci`.
-
-That is all you need. In step 3, use the same admin username and password you
-just connected with.
+TablePlus, MySQL Workbench, DBeaver or your IDE's database panel all work the
+same way if you prefer one of those.
 
 **Option B — with the command line**
 
-First open a MySQL shell as an admin user. The command differs by platform:
+Open a MySQL shell as `root`:
 
 | Setup | Command |
 | --- | --- |
-| XAMPP (Windows) | `C:\xampp\mysql\bin\mysql -u root` |
-| Laragon (Windows) | `mysql -u root` |
-| macOS (Homebrew) | `mysql -u root` |
-| Linux (Fedora, Ubuntu, Debian) | `sudo mysql` |
-
-Linux is the odd one out: its packaged MariaDB authenticates `root` by operating
-system user rather than by password, so the shell has to be opened with `sudo`.
-On XAMPP and Laragon `root` has a blank password by default and `sudo` does not
-apply. If `mysql` is not a recognised command on Windows, use the full path from
-the XAMPP row, or open the shell from the Laragon menu.
+| Laragon | `mysql -u root` (from the Laragon menu's terminal) |
+| XAMPP | `C:\xampp\mysql\bin\mysql -u root` |
 
 Then create the database:
 
@@ -73,27 +63,32 @@ CREATE DATABASE IF NOT EXISTS peopleportal
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-You can stop here and use your admin account in step 3 — fine for local
-development. To create a dedicated user instead, which is worth doing if the
-database is shared or reachable beyond your machine, also run:
+That is all most setups need — `root` with a blank password is fine for local
+development. If MySQL came from the official MySQL Installer rather than XAMPP
+or Laragon, `root` has the password you chose during setup; use that in step 3.
+
+To create a dedicated user instead — worth doing if the database is shared or
+reachable beyond your machine — also run:
 
 ```sql
-CREATE USER IF NOT EXISTS 'peopleportal'@'localhost' IDENTIFIED BY 'CHANGE_ME';
-CREATE USER IF NOT EXISTS 'peopleportal'@'127.0.0.1' IDENTIFIED BY 'CHANGE_ME';
+CREATE OR REPLACE USER 'peopleportal'@'localhost' IDENTIFIED BY 'CHANGE_ME';
+CREATE OR REPLACE USER 'peopleportal'@'127.0.0.1' IDENTIFIED BY 'CHANGE_ME';
 GRANT ALL PRIVILEGES ON peopleportal.* TO 'peopleportal'@'localhost';
 GRANT ALL PRIVILEGES ON peopleportal.* TO 'peopleportal'@'127.0.0.1';
-FLUSH PRIVILEGES;
 ```
 
 Replace `CHANGE_ME` with a password of your own. Both host entries are needed:
 `DB_HOST=127.0.0.1` connects over TCP, but MySQL resolves the loopback address
 back to the hostname `localhost` when matching grants, so an account created for
-only one of the two still gets access denied.
+only one of the two still gets access denied. Use `CREATE OR REPLACE USER` and
+not `CREATE USER IF NOT EXISTS` — the latter silently keeps the existing
+password if the account is already there, which looks like a wrong-password
+error later.
 
 ### 3. Configure the app
 
 ```bash
-cp .env.example .env
+copy .env.example .env    # macOS/Linux: cp .env.example .env
 php artisan key:generate
 ```
 
@@ -108,10 +103,7 @@ DB_PASSWORD=
 
 If that is your setup, there is nothing to change here. Otherwise replace them
 with whatever step 2 left you with — the dedicated `peopleportal` user and its
-password, or an admin account that has a password. On Linux you always have to
-change these: packaged MariaDB authenticates `root` by operating system user
-over a local socket, so `root` cannot log in over `DB_HOST=127.0.0.1` at all,
-with or without a password. Create the dedicated user and use that.
+password, or an admin account that has a password.
 
 Quote the password if it contains `#`, spaces or quotes — an unquoted `#` starts
 a comment. Verify the credentials before migrating:
@@ -135,12 +127,11 @@ whose data you want to keep.
 | --- | --- |
 | `General error: 1 near "MODIFY": syntax error` | Running against SQLite. Check `DB_CONNECTION=mysql` in `.env`, then `php artisan config:clear`. |
 | `Unknown database 'peopleportal'` | Step 2 was skipped, or `DB_DATABASE` does not match the database you created. |
-| `Access denied ... (using password: NO)` | `DB_PASSWORD` is empty in `.env` but the account has a password. |
-| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist. Confirm it with `sudo mysql -e "SELECT user, host FROM mysql.user"`, then re-run the `CREATE USER`/`GRANT` block from step 2. |
-| `Access denied for user 'root'@'localhost'` from the app on Linux | `root` is socket-authenticated there and cannot connect over TCP. Create the dedicated `peopleportal` user in step 2 and point `.env` at it. |
-| `Access denied for user 'root'@'localhost'` when opening the MySQL shell on Linux | Use `sudo mysql`, not `mysql -u root`. |
-| `'mysql' is not recognized` on Windows | Use the full path, e.g. `C:\xampp\mysql\bin\mysql -u root`. |
-| `Connection refused` | The MySQL service is not running. Start it from the XAMPP or Laragon control panel, or `sudo systemctl start mariadb` on Linux. |
+| `Access denied ... (using password: NO)` | `DB_PASSWORD` is empty in `.env` but the account has a password. Common on MySQL Installer setups, where `root` always has one. |
+| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist. Re-run the `CREATE OR REPLACE USER`/`GRANT` block from step 2. |
+| `'mysql' is not recognized` | Use the full path, e.g. `C:\xampp\mysql\bin\mysql -u root`, or open the shell from the Laragon menu. |
+| `Connection refused` | MySQL is not running. Start it from the XAMPP or Laragon control panel. |
+| `[1698] Access denied for user 'root'@'localhost'` | You are on WSL, macOS or Linux, where packaged MariaDB authenticates `root` by operating system user and cannot be reached over TCP at all. Create the dedicated `peopleportal` user in step 2 and point `.env` at it. |
 
 Config is cached separately from `.env`, so run `php artisan config:clear` after
 any change to `.env` that does not seem to take effect.
