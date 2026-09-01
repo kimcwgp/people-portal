@@ -14,16 +14,75 @@ employee regularization, with role-based access control.
 
 ## Setup
 
+MySQL or MariaDB is required — SQLite will not work. Two migrations alter the
+`leaves` and `overtimes` status columns with raw MySQL DDL
+(`ALTER TABLE ... MODIFY COLUMN ... ENUM`), which SQLite cannot parse.
+
+**1. Install dependencies**
+
 ```bash
 composer install
 npm install
+```
 
+**2. Create the database and its user**
+
+Pick a password and use the same one in both this step and step 3.
+
+```bash
+sudo mysql <<'SQL'
+CREATE DATABASE IF NOT EXISTS peopleportal
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'peopleportal'@'localhost' IDENTIFIED BY 'CHANGE_ME';
+CREATE USER IF NOT EXISTS 'peopleportal'@'127.0.0.1' IDENTIFIED BY 'CHANGE_ME';
+GRANT ALL PRIVILEGES ON peopleportal.* TO 'peopleportal'@'localhost';
+GRANT ALL PRIVILEGES ON peopleportal.* TO 'peopleportal'@'127.0.0.1';
+FLUSH PRIVILEGES;
+SQL
+```
+
+Both host entries are needed. `DB_HOST=127.0.0.1` connects over TCP, but MySQL
+resolves the loopback address back to the hostname `localhost` when matching
+grants, so an account created for only one of the two still gets access denied.
+
+**3. Configure the app**
+
+```bash
 cp .env.example .env
 php artisan key:generate
+```
 
-# configure DB_* in .env, then:
+Set `DB_PASSWORD` in `.env` to the password from step 2. `.env.example` already
+has the other `DB_*` values filled in; change `DB_DATABASE` / `DB_USERNAME` only
+if you used different names. Quote the password if it contains `#`, spaces or
+quotes — an unquoted `#` starts a comment.
+
+Verify the credentials before migrating:
+
+```bash
+mysql -h 127.0.0.1 -u peopleportal -p'CHANGE_ME' peopleportal -e "SELECT 1;"
+```
+
+**4. Build the schema**
+
+```bash
 php artisan migrate:fresh --seed
 ```
+
+`migrate:fresh` drops every table first, so use plain `migrate` on a database
+whose data you want to keep.
+
+### Troubleshooting
+
+| Error | Cause |
+| --- | --- |
+| `General error: 1 near "MODIFY": syntax error` | Running against SQLite. Check `DB_CONNECTION=mysql` in `.env`, then `php artisan config:clear`. |
+| `Access denied ... (using password: NO)` | `DB_PASSWORD` is empty in `.env`. |
+| `Access denied ... (using password: YES)` | Wrong password, or the user does not exist — re-run step 2. |
+| `Unknown database 'peopleportal'` | Step 2 was skipped, or `DB_DATABASE` does not match the database you created. |
+
+Config is cached separately from `.env`, so run `php artisan config:clear` after
+any change to `.env` that does not seem to take effect.
 
 ## Running locally
 
