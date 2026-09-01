@@ -1,0 +1,117 @@
+name: Deploy
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      install_dependencies:
+        description: 'Run composer install and npm install'
+        type: boolean
+        default: false
+      npm_build:
+        description: 'Run npm run build'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Pull and clear caches
+        env:
+          PHP_BINARY: ${{ vars.PHP_BINARY || '/usr/bin/php82' }}
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s <<EOF
+            set -euo pipefail
+            eval \$(ssh-agent)
+            ssh-add "${{ secrets.DEPLOY_GIT_SSH_KEY }}"
+            sudo alternatives --set php "$PHP_BINARY"
+            cd "${{ secrets.DEPLOY_PATH }}"
+            sudo chown -R "${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }}" "${{ secrets.DEPLOY_PATH }}"
+
+            git stash
+            git stash clear
+            git prune
+            git pull origin dev
+            php artisan view:clear
+            php artisan cache:clear
+            php artisan config:clear
+            php artisan route:clear
+            php artisan optimize:clear
+            mkdir -p bootstrap/cache
+            sudo chmod 777 -R bootstrap/cache
+            sudo chmod 777 -R storage
+          EOF
+
+  install-dependencies:
+    name: Install dependencies
+    needs: deploy
+    if: github.event_name == 'workflow_dispatch' && inputs.install_dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: composer install / npm install
+        env:
+          PHP_BINARY: ${{ vars.PHP_BINARY || '/usr/bin/php82' }}
+          NODE_VERSION: ${{ vars.NODE_VERSION || '20.19.1' }}
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s <<EOF
+            set -euo pipefail
+            sudo alternatives --set php "$PHP_BINARY"
+            cd "${{ secrets.DEPLOY_PATH }}"
+            sudo chown -R "${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }}" "${{ secrets.DEPLOY_PATH }}"
+
+            export NVM_DIR="\$HOME/.nvm"
+            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+            nvm install "$NODE_VERSION"
+            nvm use "$NODE_VERSION"
+
+            composer install
+            rm -rf node_modules
+            npm install
+            sudo chown -R "${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }}" "${{ secrets.DEPLOY_PATH }}"
+          EOF
+
+  npm-build:
+    name: Build front-end assets
+    needs: [deploy, install-dependencies]
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.npm_build && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: npm run build
+        env:
+          NODE_VERSION: ${{ vars.NODE_VERSION || '20.19.1' }}
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s <<EOF
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_PATH }}"
+            sudo chown -R "${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }}" "${{ secrets.DEPLOY_PATH }}"
+            export NVM_DIR="\$HOME/.nvm"
+            [ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
+            nvm install "$NODE_VERSION"
+            nvm use "$NODE_VERSION"
+            npm run build
+          EOF
