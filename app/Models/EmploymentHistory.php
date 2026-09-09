@@ -10,6 +10,11 @@ class EmploymentHistory extends Model
 {
     use HasFactory;
 
+    /**
+     * Eloquent would pluralize this to 'employment_histories'.
+     */
+    protected $table = 'employment_history';
+
     protected $fillable = [
         'user_id',
         'change_type',
