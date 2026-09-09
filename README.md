@@ -174,13 +174,35 @@ uncomment the two routes in `routes/api.php` and the two guest routes in
 
 ## Seed data
 
-Seeding creates roles and permissions, teams, shifts, leave types and the test
-accounts above — nothing else. Clients, projects and project types start empty
-and are created through the app.
+`php artisan db:seed` runs two layers. The baseline — roles and permissions,
+teams, shifts, leave types and the test accounts above — followed by
+`SampleDataSeeder`, which fills every remaining table with demo data for manual
+testing.
 
-One caveat: `project_types` has no management screen, and creating a project
-requires an existing project type (`StoreProjectRequest`), so a row has to be
-inserted into `project_types` directly before the Projects page can be used.
+Sample data on its own, against a database that already has the baseline:
+
+```bash
+php artisan db:seed --class=SampleDataSeeder
+```
+
+It adds 13 more accounts (same password) on top of the seven test users, giving
+a 20-person roster across teams, shifts and reporting lines, and then:
+
+| Area | What you get |
+| --- | --- |
+| Employee 201 files | `employees`, `personal_information`, `job_information`, `salary_information` and an `employment_history` trail for all 20 people, including promotions, a part-timer, a contractor, a consultant, an intern and one resignation |
+| Clients and projects | 10 clients, 10 project types, 14 projects with project managers |
+| Attendance | 4 weeks of weekday records per person, with lunch and short breaks, absences, missed clock-outs, open shifts for whoever is flagged online, and 12 corrections across all three statuses |
+| Leaves | Filings in every status and duration, plus `leave_credits` for this year and last |
+| Overtime, standups, shift changes | Filings in every status, two weeks of standups, and shift change requests including already-applied ones |
+| HR | Announcements (active, archived and one soft-deleted), associate logs, and mirrored `for_approvals` rows |
+
+Leaves are created pending and then moved to their final status, so
+`LeaveObserver` computes the credit balances exactly as the app would — used,
+pending and carry-over all reconcile.
+
+Every seeder matches on natural keys, so re-running tops the data up instead of
+duplicating it. To start over completely, use `php artisan migrate:fresh --seed`.
 
 ## Configuration
 
