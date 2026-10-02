@@ -16,7 +16,7 @@ public function up()
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('approver_id');
             $table->string('approved_by');
-            $table->enum('type_of_approval', ['leaves', 'overtime']);
+            $table->enum('type_of_approval', ['leaves']);
             $table->text('details');
             $table->text('other_details')->nullable();
             $table->enum('status', ['PENDING', 'APPROVED', 'REJECTED'])->default('PENDING');
