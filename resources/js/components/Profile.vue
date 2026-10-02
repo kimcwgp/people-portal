@@ -1,50 +1,44 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-0 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)]">
+  <div class="min-h-screen bg-canvas p-0 sm:p-6 lg:p-8 pt-[env(safe-area-inset-top)]">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
-        <svg class="motion-safe:animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="motion-safe:animate-spin h-12 w-12 text-accent-solid mx-auto mb-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p class="text-gray-600">Loading profile...</p>
+        <p class="text-text-muted">Loading profile...</p>
       </div>
     </div>
 
     <!-- Profile Content -->
     <div v-else-if="profile" class="mx-auto max-w-7xl px-2 sm:px-4 lg:px-6">
-      <!-- Header -->
-      <header class="mb-6 rounded-2xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
-        <div class="mb-6 flex flex-col items-start justify-between gap-3 sm:flex-row">
-          <h1 class="text-xl font-bold text-gray-900 sm:text-2xl">Profile</h1>
-          <button
-            @click="toggleEditMode"
-            :disabled="updating"
-            class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:w-auto sm:px-4"
-          >
+      <!-- Title bar, matching Attendance and Leave Requests -->
+      <div class="mb-3 sm:mb-4 flex items-center justify-between gap-4 rounded-xl bg-surface px-4 py-3 shadow-sm sm:rounded-2xl sm:px-6">
+        <h1 class="text-xl font-bold text-text sm:text-2xl">Profile</h1>
+        <button
+          @click="toggleEditMode"
+          :disabled="updating"
+          class="flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-accent-solid px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+        >
             <svg v-if="!editMode" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
             <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
-            <span>{{ editMode ? 'Cancel' : 'Edit Profile' }}</span>
-          </button>
-        </div>
+          <span>{{ editMode ? 'Cancel' : 'Edit Profile' }}</span>
+        </button>
+      </div>
 
+      <!-- Identity card -->
+      <header class="mb-3 sm:mb-4 rounded-xl bg-surface p-4 shadow-sm sm:rounded-2xl sm:p-6">
         <!-- Profile Avatar and Basic Info -->
         <section class="mb-8 flex flex-col items-start gap-6 md:flex-row md:items-center md:gap-6" aria-labelledby="basic-info">
           <!-- Avatar -->
           <div class="relative shrink-0">
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-lg font-bold text-white sm:h-20 sm:w-20 sm:text-xl lg:h-24 lg:w-24 lg:text-2xl" aria-hidden="true">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-accent-solid text-lg font-bold text-white sm:h-20 sm:w-20 sm:text-xl lg:h-24 lg:w-24 lg:text-2xl" aria-hidden="true">
               {{ profile.initials }}
-            </div>
-            <!-- Online/Offline Indicator -->
-            <div class="absolute -bottom-1 -right-1">
-              <div :class="[
-                'h-5 w-5 rounded-full border-[3px] border-white',
-                profile.online ? 'bg-green-500' : 'bg-gray-400'
-              ]" aria-hidden="true"></div>
             </div>
           </div>
 
@@ -52,76 +46,52 @@
           <div class="w-full flex-1">
             <!-- Name (Editable) -->
             <div v-if="!editMode" class="text-center sm:text-left">
-              <h2 id="basic-info" class="text-2xl font-bold text-gray-900 sm:text-3xl">{{ profile.name }}</h2>
-              <p class="mt-1 text-gray-600">{{ profile.position_label }}</p>
+              <h2 id="basic-info" class="text-2xl font-bold text-text sm:text-3xl">{{ profile.name }}</h2>
+              <p class="mt-1 text-text-muted">{{ profile.position_label }}</p>
             </div>
             <div v-else class="space-y-3">
               <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700">Full Name</label>
+                <label class="mb-1 block text-sm font-medium text-text">Full Name</label>
                 <input
                   v-model="editForm.name"
                   type="text"
-                  class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  :class="{ 'border-red-300': errors.name }"
+                  class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                  :class="{ 'border-danger': errors.name }"
                 />
-                <p v-if="errors.name" class="mt-1 text-sm text-red-500">{{ errors.name[0] }}</p>
+                <p v-if="errors.name" class="mt-1 text-sm text-danger">{{ errors.name[0] }}</p>
               </div>
 
               <div>
-                <label class="mb-1 block text-sm font-medium text-gray-700">Position Title</label>
+                <label class="mb-1 block text-sm font-medium text-text">Position Title</label>
                 <input
                   v-model="editForm.position_name"
                   type="text"
-                  class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  :class="{ 'border-red-300': errors.position_name }"
+                  class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                  :class="{ 'border-danger': errors.position_name }"
                 />
-                <p v-if="errors.position_name" class="mt-1 text-sm text-red-500">{{ errors.position_name[0] }}</p>
+                <p v-if="errors.position_name" class="mt-1 text-sm text-danger">{{ errors.position_name[0] }}</p>
               </div>
             </div>
 
             <!-- Status Badges -->
-            <div class="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start sm:gap-3">
-              <span :class="[
-                'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium sm:px-3 sm:py-1 sm:text-sm',
-                profile.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              ]">
-                <span :class="[
-                  'mr-2 h-2 w-2 rounded-full',
-                  profile.status ? 'bg-green-400' : 'bg-red-400'
-                ]"></span>
-                {{ profile.status_label }}
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <span class="inline-flex items-center rounded-full bg-status-green px-3 py-1 text-xs font-medium text-status-text">
+                {{ profile.employment_status_label }}
               </span>
 
               <span :class="[
-                'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium sm:px-3 sm:py-1 sm:text-sm',
+                'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-status-text',
                 getEmploymentTypeColor(profile.employment_type)
               ]">
-                <span :class="[
-                  'mr-2 h-2 w-2 rounded-full',
-                  getEmploymentTypeDotColor(profile.employment_type)
-                ]"></span>
                 {{ profile.employment_type_label }}
               </span>
 
-              <span :class="[
-                'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium sm:px-3 sm:py-1 sm:text-sm',
-                profile.online ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-              ]">
-                <span :class="[
-                  'mr-2 h-2 w-2 rounded-full',
-                  profile.online ? 'bg-blue-400 motion-safe:animate-pulse' : 'bg-gray-400'
-                ]"></span>
-                {{ profile.online_label }}
+              <span class="inline-flex items-center rounded-full bg-status-yellow px-3 py-1 text-xs font-medium text-status-text">
+                {{ getShiftLabel() }}
               </span>
 
-              <span :class="[
-                'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium sm:px-3 sm:py-1 sm:text-sm',
-                getShiftColor()
-              ]">
-                <svg class="mr-2 h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                {{ getShiftLabel() }}
+              <span class="inline-flex items-center rounded-full bg-status-orange px-3 py-1 text-xs font-medium text-status-text">
+                {{ profile.leave_scheme_label }}
               </span>
             </div>
           </div>
@@ -132,7 +102,7 @@
           <button
             @click="saveProfile"
             :disabled="updating"
-            class="flex items-center space-x-2 rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+            class="flex items-center space-x-2 rounded-lg bg-success px-6 py-2 text-white transition-colors hover:bg-success/90 disabled:opacity-50"
           >
             <svg v-if="updating" class="h-4 w-4 motion-safe:animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -144,7 +114,7 @@
           <button
             @click="toggleEditMode"
             :disabled="updating"
-            class="rounded-lg border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            class="rounded-lg border border-border px-6 py-2 text-text transition-colors hover:bg-surface-sunken disabled:opacity-50"
           >
             Cancel
           </button>
@@ -152,12 +122,12 @@
       </header>
 
       <!-- Tabs Navigation -->
-      <div class="rounded-t-2xl bg-white shadow-sm supports-[backdrop-filter]:bg-white/70">
-        <div class="border-b border-gray-200">
+      <div class="rounded-t-2xl bg-surface shadow-sm supports-[backdrop-filter]:bg-surface/70">
+        <div class="border-b border-border">
           <!-- Mobile: Select -->
           <div class="sm:hidden p-3">
             <label for="tab-select" class="sr-only">Select section</label>
-            <select id="tab-select" v-model="activeTab" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500">
+            <select id="tab-select" v-model="activeTab" class="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-accent focus:ring-2 focus:ring-accent">
               <option v-for="tab in tabs" :key="tab.id" :value="tab.id">{{ tab.name }}</option>
             </select>
           </div>
@@ -180,8 +150,8 @@
               :class="[
                 'mr-3 inline-flex items-center space-x-1 whitespace-nowrap border-b-2 px-1 py-2 text-xs font-medium transition-colors sm:mr-6 sm:space-x-2 sm:text-sm lg:mr-8',
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  ? 'border-accent text-accent-solid'
+                  : 'border-transparent text-text-muted hover:border-border hover:text-text'
               ]"
             >
               <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -193,7 +163,7 @@
               <span>{{ tab.name }}</span>
               <span v-if="tab.badge" :class="[
                 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                tab.badgeColor || 'bg-gray-100 text-gray-800'
+                tab.badgeColor || 'bg-surface-sunken text-text'
               ]">
                 {{ tab.badge }}
               </span>
@@ -203,50 +173,50 @@
       </div>
 
       <!-- Tabs Content -->
-      <div class="rounded-b-2xl bg-white shadow-sm">
+      <div class="rounded-b-2xl bg-surface shadow-sm">
         <!-- Personal Information Tab -->
         <section v-if="activeTab === 'personal'" class="p-4 sm:p-6 lg:p-8" role="tabpanel" aria-labelledby="personal-tab">
           <div class="sm:mx-auto sm:max-w-7xl">
             <form @submit.prevent="savePersonalInfo">
               <!-- Contact Information Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-accent-solid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
                   Contact Information
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Email Address</label>
-                    <div class="flex items-center space-x-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
-                      <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <label class="mb-2 block text-sm font-medium text-text">Email Address</label>
+                    <div class="flex items-center space-x-2 rounded-lg border border-border bg-surface-sunken px-4 py-2">
+                      <svg class="h-5 w-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                       </svg>
-                      <span class="break-all text-gray-700">{{ profile.email }}</span>
+                      <span class="break-all text-text">{{ profile.email }}</span>
                     </div>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Phone Number</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Phone Number</label>
                     <input
                       v-model="personalForm.phone_number"
                       type="tel"
                       placeholder="e.g. +63 912 345 6789"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.phone_number'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.phone_number'] }"
                     />
-                    <p v-if="errors['personal_info.phone_number']" class="mt-1 text-sm text-red-500">{{ errors['personal_info.phone_number'][0] }}</p>
+                    <p v-if="errors['personal_info.phone_number']" class="mt-1 text-sm text-danger">{{ errors['personal_info.phone_number'][0] }}</p>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Alternate Phone</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Alternate Phone</label>
                     <input
                       v-model="personalForm.alternate_phone_number"
                       type="tel"
                       placeholder="e.g. +63 912 345 6789"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.alternate_phone_number'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.alternate_phone_number'] }"
                     />
                   </div>
                 </div>
@@ -254,28 +224,28 @@
 
               <!-- Personal Details Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-accent-solid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                   </svg>
                   Personal Details
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Date of Birth</label>
                     <input
                       v-model="personalForm.date_of_birth"
                       type="date"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.date_of_birth'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.date_of_birth'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Gender</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Gender</label>
                     <select
                       v-model="personalForm.gender"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
                     >
                       <option value="">Select Gender</option>
                       <option value="male">Male</option>
@@ -284,10 +254,10 @@
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Marital Status</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Marital Status</label>
                     <select
                       v-model="personalForm.marital_status"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
                     >
                       <option value="">Select Status</option>
                       <option value="single">Single</option>
@@ -298,25 +268,25 @@
                   </div>
 
                   <div v-if="personalForm.marital_status === 'married'">
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Spouse Name</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Spouse Name</label>
                     <input
                       v-model="personalForm.spouse_name"
                       type="text"
                       placeholder="Enter spouse name"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.spouse_name'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.spouse_name'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Number of Children</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Number of Children</label>
                     <input
                       v-model="personalForm.num_children"
                       type="number"
                       min="0"
                       max="20"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.num_children'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.num_children'] }"
                     />
                   </div>
                 </div>
@@ -324,8 +294,8 @@
 
               <!-- Address Information Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-accent-solid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                   </svg>
@@ -333,33 +303,33 @@
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Permanent Address</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Permanent Address</label>
                     <textarea
                       v-model="personalForm.permanent_address"
                       rows="4"
                       placeholder="Enter permanent address"
-                      class="w-full resize-none rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.permanent_address'] }"
+                      class="w-full resize-none rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.permanent_address'] }"
                     ></textarea>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Current Address</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Current Address</label>
                     <textarea
                       v-model="personalForm.current_address"
                       rows="4"
                       placeholder="Enter current address"
-                      class="w-full resize-none rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.current_address'] }"
+                      class="w-full resize-none rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.current_address'] }"
                     ></textarea>
                     <div class="mt-2">
                       <label class="flex items-center">
                         <input
                           type="checkbox"
                           @change="copyPermanentAddress"
-                          class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          class="rounded border-border text-accent-solid focus:ring-accent"
                         />
-                        <span class="ml-2 text-sm text-gray-600">Same as permanent address</span>
+                        <span class="ml-2 text-sm text-text-muted">Same as permanent address</span>
                       </label>
                     </div>
                   </div>
@@ -368,43 +338,43 @@
 
               <!-- Emergency Contact Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                   </svg>
                   Emergency Contact
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Contact Name</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Contact Name</label>
                     <input
                       v-model="personalForm.emergency_contact_name"
                       type="text"
                       placeholder="Enter contact name"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.emergency_contact_name'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.emergency_contact_name'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Contact Number</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Contact Number</label>
                     <input
                       v-model="personalForm.emergency_contact_number"
                       type="tel"
                       placeholder="e.g. +63 912 345 6789"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.emergency_contact_number'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.emergency_contact_number'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Relationship</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Relationship</label>
                     <input
                       v-model="personalForm.emergency_contact_relationship"
                       type="text"
                       placeholder="e.g. Spouse, Parent, Sibling"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.emergency_contact_relationship'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.emergency_contact_relationship'] }"
                     />
                   </div>
                 </div>
@@ -412,54 +382,54 @@
 
               <!-- Government IDs Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
                   </svg>
                   Government IDs (Philippines)
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-4">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">TIN</label>
+                    <label class="mb-2 block text-sm font-medium text-text">TIN</label>
                     <input
                       v-model="personalForm.tin"
                       type="text"
                       placeholder="000-000-000-000"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.tin'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.tin'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">SSS</label>
+                    <label class="mb-2 block text-sm font-medium text-text">SSS</label>
                     <input
                       v-model="personalForm.sss"
                       type="text"
                       placeholder="00-0000000-0"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.sss'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.sss'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">PhilHealth</label>
+                    <label class="mb-2 block text-sm font-medium text-text">PhilHealth</label>
                     <input
                       v-model="personalForm.philhealth"
                       type="text"
                       placeholder="00-000000000-0"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.philhealth'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.philhealth'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Pag-IBIG</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Pag-IBIG</label>
                     <input
                       v-model="personalForm.pagibig"
                       type="text"
                       placeholder="0000-0000-0000"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['personal_info.pagibig'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['personal_info.pagibig'] }"
                     />
                   </div>
                 </div>
@@ -468,11 +438,11 @@
               <!-- Save Button -->
               <div class="sm:flex sm:justify-end sm:border-t sm:pt-6">
                 <!-- Mobile sticky action bar -->
-                <div class="sticky bottom-0 left-0 right-0 z-10 -mx-4 -mb-4 border-t bg-white/90 p-3 backdrop-blur supports-[backdrop-filter]:bg-white/70 sm:static sm:m-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-0">
+                <div class="sticky bottom-0 left-0 right-0 z-10 -mx-4 -mb-4 border-t bg-surface/90 p-3 backdrop-blur supports-[backdrop-filter]:bg-surface/70 sm:static sm:m-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-0">
                   <button
                     type="submit"
                     :disabled="updatingPersonal"
-                    class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+                    class="flex w-full items-center justify-center space-x-2 rounded-lg bg-accent-solid px-6 py-2 text-white transition-colors hover:bg-accent-hover disabled:opacity-50 sm:w-auto"
                   >
                     <svg v-if="updatingPersonal" class="h-4 w-4 motion-safe:animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -492,63 +462,63 @@
             <form @submit.prevent="saveEmploymentInfo">
               <!-- Employee Information Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-accent-solid" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                   </svg>
                   Employee Information
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Employee ID</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Employee ID</label>
                     <input
                       v-model="employmentForm.employee_id"
                       type="text"
                       placeholder="e.g. D2019-007"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['employment_info.employee_id'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['employment_info.employee_id'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Hire Date</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Hire Date</label>
                     <input
                       :value="profile.employment_info?.hire_date || 'Not Set'"
                       type="text"
                       readonly
-                      class="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-600 cursor-not-allowed"
+                      class="w-full rounded-lg border border-border bg-surface-sunken px-4 py-2 text-text-muted cursor-not-allowed"
                     />
-                    <p class="mt-1 text-xs text-gray-500">This field is managed by HR. Contact HR to update.</p>
+                    <p class="mt-1 text-xs text-text-muted">This field is managed by HR. Contact HR to update.</p>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Regularization Date</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Regularization Date</label>
                     <input
                       :value="profile.employment_info?.regularization_date || 'Not Set'"
                       type="text"
                       readonly
-                      class="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-600 cursor-not-allowed"
+                      class="w-full rounded-lg border border-border bg-surface-sunken px-4 py-2 text-text-muted cursor-not-allowed"
                     />
-                    <p class="mt-1 text-xs text-gray-500">This field is managed by HR. Contact HR to update.</p>
+                    <p class="mt-1 text-xs text-text-muted">This field is managed by HR. Contact HR to update.</p>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Employment Status</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Employment Status</label>
                     <input
                       :value="profile.employment_info?.employment_status || 'Not Set'"
                       type="text"
                       readonly
-                      class="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-600 cursor-not-allowed"
+                      class="w-full rounded-lg border border-border bg-surface-sunken px-4 py-2 text-text-muted cursor-not-allowed"
                     />
-                    <p class="mt-1 text-xs text-gray-500">This field is managed by HR. Contact HR to update.</p>
+                    <p class="mt-1 text-xs text-text-muted">This field is managed by HR. Contact HR to update.</p>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Employment Type</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Employment Type</label>
                     <select
                       v-model="employmentForm.employment_type"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['employment_info.employment_type'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['employment_info.employment_type'] }"
                     >
                       <option value="">Select Employment Type</option>
                       <option value="full_time">Full Time</option>
@@ -557,7 +527,7 @@
                       <option value="intern">Intern</option>
                       <option value="consultant">Consultant</option>
                     </select>
-                    <p v-if="errors['employment_info.employment_type']" class="mt-1 text-sm text-red-500">
+                    <p v-if="errors['employment_info.employment_type']" class="mt-1 text-sm text-danger">
                       {{ errors['employment_info.employment_type'][0] }}
                     </p>
                   </div>
@@ -567,54 +537,54 @@
 
               <!-- Position Information Section -->
               <div class="mb-6 sm:mb-8">
-                <h3 class="mb-6 flex items-center text-lg font-semibold text-gray-900">
-                  <svg class="mr-2 h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <h3 class="mb-6 flex items-center text-lg font-semibold text-text">
+                  <svg class="mr-2 h-5 w-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"/>
                   </svg>
                   Position Information
                 </h3>
                 <div class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Position Level</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Position Level</label>
                     <input
                       v-model="employmentForm.position_level"
                       type="text"
                       placeholder="e.g. Senior, Junior, Manager"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['employment_info.position_level'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['employment_info.position_level'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Career Level</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Career Level</label>
                     <input
                       v-model="employmentForm.career_level"
                       type="text"
                       placeholder="e.g. Head, C-Level, Manager, Supervisor, Staff"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['employment_info.career_level'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['employment_info.career_level'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Career Band</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Career Band</label>
                     <input
                       v-model="employmentForm.career_band"
                       type="text"
                       placeholder="e.g. Contributor, Supervisor, Specialist, Manager, Sr Manager"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['employment_info.career_band'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['employment_info.career_band'] }"
                     />
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Career Zone</label>
+                    <label class="mb-2 block text-sm font-medium text-text">Career Zone</label>
                     <input
                       v-model="employmentForm.career_zone"
                       type="text"
                       placeholder="e.g. Learning, Competent, Mature"
-                      class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      :class="{ 'border-red-300': errors['employment_info.career_zone'] }"
+                      class="w-full rounded-lg border border-border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-accent"
+                      :class="{ 'border-danger': errors['employment_info.career_zone'] }"
                     />
                   </div>
 
@@ -623,11 +593,11 @@
 
               <!-- Save Button -->
               <div class="sm:flex sm:justify-end sm:border-t sm:pt-6">
-                <div class="sticky bottom-0 left-0 right-0 z-10 -mx-4 -mb-4 border-t bg-white/90 p-3 backdrop-blur supports-[backdrop-filter]:bg-white/70 sm:static sm:m-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-0">
+                <div class="sticky bottom-0 left-0 right-0 z-10 -mx-4 -mb-4 border-t bg-surface/90 p-3 backdrop-blur supports-[backdrop-filter]:bg-surface/70 sm:static sm:m-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-0">
                   <button
                     type="submit"
                     :disabled="updatingEmployment"
-                    class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+                    class="flex w-full items-center justify-center space-x-2 rounded-lg bg-accent-solid px-6 py-2 text-white transition-colors hover:bg-accent-hover disabled:opacity-50 sm:w-auto"
                   >
                     <svg v-if="updatingEmployment" class="h-4 w-4 motion-safe:animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -645,7 +615,7 @@
         <section v-if="activeTab === 'logs'" class="p-4 sm:p-6 lg:p-8" role="tabpanel" aria-labelledby="logs-tab">
           <!-- Loading State -->
           <div v-if="loadingLogs" class="flex items-center justify-center py-12">
-            <svg class="motion-safe:animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <svg class="motion-safe:animate-spin h-8 w-8 text-accent-solid" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -654,43 +624,43 @@
           <!-- Associate Logs Content -->
           <div v-else>
             <div class="mb-6 flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-gray-900">Associate Logs</h3>
-              <span class="text-sm text-gray-500">{{ associateLogs.length }} entries</span>
+              <h3 class="text-lg font-semibold text-text">Associate Logs</h3>
+              <span class="text-sm text-text-muted">{{ associateLogs.length }} entries</span>
             </div>
 
             <!-- Empty State -->
             <div v-if="associateLogs.length === 0" class="py-12 text-center">
-              <svg class="mx-auto mb-4 h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="mx-auto mb-4 h-16 w-16 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
-              <h3 class="mb-2 text-lg font-medium text-gray-900">No Associate Logs</h3>
-              <p class="text-gray-600">No log entries have been created for this employee yet.</p>
+              <h3 class="mb-2 text-lg font-medium text-text">No Associate Logs</h3>
+              <p class="text-text-muted">No log entries have been created for this employee yet.</p>
             </div>
 
             <!-- Logs Table -->
-            <div v-else class="overflow-hidden rounded-lg border border-gray-200">
+            <div v-else class="overflow-hidden rounded-lg border border-border">
               <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-border">
+                  <thead class="bg-surface-sunken">
                     <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entry Details</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attachments</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Date</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Entry Details</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Created By</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">Attachments</th>
                     </tr>
                   </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="log in associateLogs" :key="log.id" class="hover:bg-gray-50">
-                      <td class="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{{ log.date }}</td>
-                      <td class="px-4 py-3 text-sm text-gray-900">{{ log.entry_details }}</td>
-                      <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ log.created_by || 'System' }}</td>
+                  <tbody class="bg-surface divide-y divide-border">
+                    <tr v-for="log in associateLogs" :key="log.id" class="hover:bg-surface-sunken">
+                      <td class="px-4 py-3 text-sm text-text whitespace-nowrap">{{ log.date }}</td>
+                      <td class="px-4 py-3 text-sm text-text">{{ log.entry_details }}</td>
+                      <td class="px-4 py-3 text-sm text-text-muted whitespace-nowrap">{{ log.created_by || 'System' }}</td>
                       <td class="px-4 py-3 text-sm">
                         <div v-if="log.attachments && log.attachments.length > 0" class="flex flex-wrap gap-1">
                           <button
                             v-for="attachment in log.attachments"
                             :key="attachment.id"
                             @click="downloadAttachment(attachment)"
-                            class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer"
+                            class="inline-flex items-center px-2 py-1 rounded-md text-xs bg-accent-subtle text-text hover:bg-accent-subtle transition-colors cursor-pointer"
                           >
                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -698,7 +668,7 @@
                             {{ attachment.filename }}
                           </button>
                         </div>
-                        <span v-else class="text-gray-400 text-xs">No attachments</span>
+                        <span v-else class="text-text-muted text-xs">No attachments</span>
                       </td>
                     </tr>
                   </tbody>
@@ -712,13 +682,13 @@
 
     <!-- Error State -->
     <div v-else-if="error" class="mx-auto mt-20 max-w-md text-center">
-      <div class="rounded-lg border border-red-200 bg-red-50 p-6">
-        <svg class="mx-auto mb-4 h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <div class="rounded-lg border border-danger bg-status-red p-6">
+        <svg class="mx-auto mb-4 h-12 w-12 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
         </svg>
-        <h3 class="mb-2 text-lg font-medium text-red-900">Failed to Load Profile</h3>
-        <p class="mb-4 text-red-700">{{ error }}</p>
-        <button @click="loadProfile" class="rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700">
+        <h3 class="mb-2 text-lg font-medium text-text">Failed to Load Profile</h3>
+        <p class="mb-4 text-danger">{{ error }}</p>
+        <button @click="loadProfile" class="rounded-lg bg-danger px-4 py-2 text-white transition-colors hover:bg-danger/90">
           Try Again
         </button>
       </div>
@@ -969,26 +939,16 @@ export default {
       this.personalForm.current_address = this.personalForm.permanent_address;
     },
 
+    // Literal classes so Tailwind's scanner compiles them.
     getEmploymentTypeColor(employmentType) {
       const colors = {
-        full_time: 'bg-blue-100 text-blue-800',
-        part_time: 'bg-purple-100 text-purple-800',
-        contract: 'bg-orange-100 text-orange-800',
-        intern: 'bg-green-100 text-green-800',
-        consultant: 'bg-yellow-100 text-yellow-800'
+        full_time: 'bg-status-blue',
+        part_time: 'bg-status-purple',
+        contract: 'bg-status-orange',
+        intern: 'bg-status-green',
+        consultant: 'bg-status-yellow'
       };
-      return colors[employmentType] || 'bg-gray-100 text-gray-800';
-    },
-
-    getEmploymentTypeDotColor(employmentType) {
-      const colors = {
-        full_time: 'bg-blue-400',
-        part_time: 'bg-purple-400',
-        contract: 'bg-orange-400',
-        intern: 'bg-green-400',
-        consultant: 'bg-yellow-400'
-      };
-      return colors[employmentType] || 'bg-gray-400';
+      return colors[employmentType] || 'bg-status-gray';
     },
 
     getShiftLabel() {
@@ -997,20 +957,6 @@ export default {
       }
       const shift = this.profile.shift;
       return shift.shift_label || `${shift.shift_type} (${shift.start_time} - ${shift.end_time})`;
-    },
-
-    getShiftColor() {
-      if (!this.profile?.shift) {
-        return 'bg-gray-100 text-gray-800';
-      }
-      const shiftType = this.profile.shift.shift_type?.toLowerCase();
-      const colors = {
-        'day': 'bg-yellow-100 text-yellow-800',
-        'night': 'bg-indigo-100 text-indigo-800',
-        'mid': 'bg-purple-100 text-purple-800',
-        'graveyard': 'bg-slate-100 text-slate-800'
-      };
-      return colors[shiftType] || 'bg-cyan-100 text-cyan-800';
     },
 
     formatDate(dateString) {

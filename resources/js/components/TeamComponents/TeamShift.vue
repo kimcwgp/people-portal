@@ -1,236 +1,247 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-4">
+  <div class="min-h-screen bg-canvas p-4">
     <div class="mx-auto max-w-full px-2 sm:px-4 lg:px-6 xl:px-8">
-      <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-gray-900">My Team's Shift Changes</h1>
-
+      <!-- Title bar, matching Leave Requests -->
+      <div class="mb-3 sm:mb-4 flex items-center justify-between gap-4 rounded-xl bg-surface px-4 py-3 shadow-sm sm:rounded-2xl sm:px-6">
+        <h1 class="text-xl font-bold text-text sm:text-2xl">Team's Shift</h1>
         <button
           @click="exportData"
           :disabled="loading"
-          class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex flex-shrink-0 items-center gap-2 rounded-lg bg-accent-solid px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
         >
-          <svg v-if="!loading" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg v-if="!loading" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <svg v-else class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+          <svg v-else class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          {{ loading ? 'Exporting...' : 'Export CSV' }}
+          <span class="hidden sm:inline">{{ loading ? 'Exporting...' : 'Export CSV' }}</span>
         </button>
       </div>
 
-      <!-- Filters Section -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex flex-wrap items-center gap-4 lg:gap-6">
-
-          <!-- Status Filter Buttons -->
-          <div class="flex flex-wrap gap-2 min-w-0">
-            <button
-              v-for="status in statusFilters"
-              :key="status.value"
-              @click="currentStatus = status.value"
-              :class="[
-                'px-4 py-2.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap',
-                currentStatus === status.value
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-              ]"
-            >
-              {{ status.label }}
-              <span v-if="status.count > 0" :class="[
-                'ml-2 px-2 py-0.5 text-xs rounded-full',
-                currentStatus === status.value
-                  ? 'bg-purple-100 text-purple-800'
-                  : 'bg-purple-100 text-purple-800'
-              ]">
-                {{ status.count }}
-              </span>
-            </button>
+      <!-- Filters + results live in one card, as in Leave Requests -->
+      <div class="bg-surface rounded-lg shadow-sm border border-border overflow-hidden">
+        <!-- Notched-outline fields: the label sits on the border line.
+             shrink-0 keeps the set widths so they wrap instead of collapsing. -->
+        <div class="flex flex-wrap items-center gap-3 border-b border-border p-4">
+          <div class="relative w-full shrink-0 sm:w-52">
+            <label for="ts-status" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Status</label>
+            <select id="ts-status" v-model="filters.status"
+                    class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none">
+              <option v-for="status in statusFilters" :key="status.value" :value="status.value">
+                {{ status.label }} ({{ status.count }})
+              </option>
+            </select>
           </div>
 
-          <!-- Name Filter -->
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="text-gray-700 font-medium text-sm whitespace-nowrap hidden sm:inline">Name:</span>
-            <input
-              v-model="filters.userName"
-              type="text"
-              placeholder="Search by name..."
-              class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-40 lg:w-48"
-            >
+          <div class="relative w-full shrink-0 sm:w-56">
+            <label for="ts-name" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Employee</label>
+            <input id="ts-name" type="text" v-model="filters.userName" placeholder="Search by name"
+                   class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text placeholder:text-text-subtle focus:border-accent focus:outline-none">
           </div>
 
-          <!-- Date Range Section -->
-          <div class="flex items-center gap-3 text-sm">
-            <span class="text-gray-700 font-medium whitespace-nowrap hidden sm:inline">Date:</span>
-            <input
-              type="date"
-              v-model="filters.startDate"
-              class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-40"
-            >
-            <span class="text-gray-400 text-sm">to</span>
-            <input
-              type="date"
-              v-model="filters.endDate"
-              class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-40"
-            >
+          <div class="relative w-full shrink-0 sm:w-72">
+            <label for="ts-date" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Date</label>
+            <div id="ts-date" class="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 focus-within:border-accent">
+              <input type="date" v-model="filters.startDate"
+                     class="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none">
+              <span class="text-text-subtle">&ndash;</span>
+              <input type="date" v-model="filters.endDate"
+                     class="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none">
+            </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="flex gap-3 ml-auto">
-            <button
-              @click="applyFilters"
-              class="bg-purple-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors whitespace-nowrap"
-            >
+          <div class="flex shrink-0 gap-2">
+            <button @click="applyFilters"
+                    class="flex-1 rounded-lg bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover sm:flex-none">
               Filter
             </button>
-            <button
-              @click="clearFilters"
-              class="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors whitespace-nowrap"
-            >
+            <button @click="clearFilters"
+                    class="flex-1 rounded-lg border border-border bg-surface-sunken px-5 py-2.5 text-sm font-medium text-text transition-colors hover:bg-canvas sm:flex-none">
               Clear
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Results Info -->
-      <div v-if="!loading && shiftRequests.length > 0" class="mb-4">
-        <p class="text-sm text-gray-600">
-          Showing {{ pagination?.from || 0 }} to {{ pagination?.to || 0 }} of {{ pagination?.total || 0 }} shift change requests
-        </p>
-      </div>
+        <!-- Results summary -->
+        <div v-if="!loading && shiftRequests.length > 0" class="border-b border-border px-4 py-2">
+          <p class="text-xs text-text-muted">
+            Showing {{ pagination?.from || 0 }} to {{ pagination?.to || 0 }} of {{ pagination?.total || 0 }} shift change requests
+          </p>
+        </div>
 
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-      </div>
+        <!-- Loading -->
+        <div v-if="loading" class="flex justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        </div>
 
-      <div v-else-if="shiftRequests.length === 0" class="rounded-lg bg-white p-8 shadow-sm text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-        </svg>
-        <h3 class="mt-3 text-lg font-semibold text-gray-900">No shift change requests found</h3>
-        <p class="mt-1 text-gray-600">
-          {{ hasActiveFilters ? 'Try adjusting your filters' : 'Your team hasn\'t submitted any shift change requests yet.' }}
-        </p>
-      </div>
+        <!-- Empty -->
+        <div v-else-if="shiftRequests.length === 0" class="p-8 text-center">
+          <svg class="mx-auto h-12 w-12 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+          <h3 class="mt-3 text-lg font-semibold text-text">No shift change requests found</h3>
+          <p class="mt-1 text-text-muted">
+            {{ hasActiveFilters ? 'Try adjusting your filters' : 'Your team hasn\'t submitted any shift change requests yet.' }}
+          </p>
+        </div>
 
-      <div v-else class="space-y-3">
-        <div
-          v-for="request in shiftRequests"
-          :key="request.id"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
-        >
-          <div class="p-4">
-            <!-- Header -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-3 sm:space-y-0">
-              <div class="flex items-center space-x-3 flex-1">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span class="text-sm font-bold text-white">
-                    {{ request.user?.name?.charAt(0) || 'U' }}
-                  </span>
+        <!-- Shift Requests Table -->
+        <div v-else>
+          <!-- Desktop Table -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full min-w-[1100px]">
+              <thead class="bg-surface-sunken border-b border-border">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Employee</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Current Shift</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Requested Shift</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Effective Date</th>
+                  <th class="min-w-[190px] px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Reason</th>
+                  <th class="min-w-[190px] px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Notes</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Submitted</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr v-for="request in shiftRequests" :key="request.id" class="hover:bg-surface-sunken transition-colors">
+                  <td class="px-4 py-3">
+                    <p class="whitespace-nowrap text-sm font-semibold text-text">{{ request.user?.name }}</p>
+                    <p class="whitespace-nowrap text-xs text-text-muted">{{ request.user?.email }}</p>
+                  </td>
+                  <td class="px-4 py-3">
+                    <p class="whitespace-nowrap text-sm text-text">{{ request.current_shift?.shift_label || request.current_shift?.shift_type || 'None' }}</p>
+                    <p v-if="request.current_shift" class="whitespace-nowrap text-xs text-text-muted">
+                      {{ formatTime(request.current_shift.start_time) }} - {{ formatTime(request.current_shift.end_time) }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-3">
+                    <p class="whitespace-nowrap text-sm font-semibold text-text">{{ request.requested_shift?.shift_label || request.requested_shift?.shift_type || 'Unknown' }}</p>
+                    <p v-if="request.requested_shift" class="whitespace-nowrap text-xs text-text-muted">
+                      {{ formatTime(request.requested_shift.start_time) }} - {{ formatTime(request.requested_shift.end_time) }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-3">
+                    <p class="whitespace-nowrap text-sm text-text">{{ request.formatted_effective_date }}</p>
+                  </td>
+                  <td class="px-4 py-3 max-w-xs">
+                    <p class="text-sm text-text line-clamp-2"
+                       @mouseenter="showTip($event, request.reason)" @mouseleave="hideTip">
+                      {{ request.reason || 'No reason provided' }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-3 max-w-xs">
+                    <p v-if="request.approver_notes && request.status === 'rejected'" class="text-sm text-danger line-clamp-2"
+                       @mouseenter="showTip($event, request.approver_notes)" @mouseleave="hideTip">
+                      <span class="font-semibold">Rejected: </span>{{ request.approver_notes }}
+                    </p>
+                    <p v-else-if="request.approver_notes" class="text-sm text-text-muted line-clamp-2"
+                       @mouseenter="showTip($event, request.approver_notes)" @mouseleave="hideTip">{{ request.approver_notes }}</p>
+                    <span v-else class="text-sm text-text-muted">-</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <p class="whitespace-nowrap text-sm text-text">{{ request.relative_date }}</p>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span :class="getStatusClass(request.status)" class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap uppercase">
+                      {{ request.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Cards -->
+          <div class="lg:hidden divide-y divide-border">
+            <div v-for="request in shiftRequests" :key="request.id" class="p-4 hover:bg-surface-sunken transition-colors">
+              <div class="mb-3 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-text">{{ request.user?.name }}</p>
+                  <p class="truncate text-xs text-text-muted">{{ request.user?.email }}</p>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-gray-900 truncate">{{ request.user?.name }}</h3>
-                  <p class="text-sm text-gray-600 truncate">{{ request.user?.email }}</p>
+                <span :class="getStatusClass(request.status)" class="flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap uppercase">
+                  {{ request.status }}
+                </span>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-text-muted">Current:</span>
+                  <span class="text-right font-medium text-text">{{ request.current_shift?.shift_label || request.current_shift?.shift_type || 'None' }}</span>
                 </div>
-              </div>
-
-              <div class="flex items-center justify-between sm:justify-end sm:space-x-3 flex-shrink-0">
-                <div class="flex items-center space-x-3">
-                  <span :class="getStatusClass(request.status)" class="px-2 py-1 text-xs font-medium rounded-full">
-                    {{ request.status }}
-                  </span>
-                  <div class="text-right">
-                    <p class="text-sm font-medium text-gray-900">{{ request.relative_date }}</p>
-                    <p class="text-xs text-gray-500">Submitted</p>
-                  </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-text-muted">Requested:</span>
+                  <span class="text-right font-medium text-text">{{ request.requested_shift?.shift_label || request.requested_shift?.shift_type || 'Unknown' }}</span>
                 </div>
-              </div>
-            </div>
-
-            <!-- Details Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-              <!-- Current Shift Column -->
-              <div class="bg-gray-50 rounded-lg p-3">
-                <p class="text-xs font-medium text-gray-500 mb-1">CURRENT SHIFT</p>
-                <p class="text-sm font-semibold text-gray-900">{{ request.current_shift?.shift_label || request.current_shift?.shift_type || 'None' }}</p>
-                <p v-if="request.current_shift" class="text-xs text-gray-600">
-                  {{ formatTime(request.current_shift.start_time) }} - {{ formatTime(request.current_shift.end_time) }}
-                </p>
-              </div>
-
-              <!-- Requested Shift Column -->
-              <div class="bg-purple-50 rounded-lg p-3">
-                <p class="text-xs font-medium text-purple-700 mb-1">REQUESTED SHIFT</p>
-                <p class="text-sm font-semibold text-purple-900">{{ request.requested_shift?.shift_label || request.requested_shift?.shift_type || 'Unknown' }}</p>
-                <p v-if="request.requested_shift" class="text-xs text-purple-600">
-                  {{ formatTime(request.requested_shift.start_time) }} - {{ formatTime(request.requested_shift.end_time) }}
-                </p>
-              </div>
-
-              <!-- Effective Date Column -->
-              <div class="bg-gray-50 rounded-lg p-3">
-                <p class="text-xs font-medium text-gray-500 mb-1">EFFECTIVE DATE</p>
-                <p class="text-sm text-gray-900">{{ request.formatted_effective_date }}</p>
-              </div>
-
-              <!-- Reason Column -->
-              <div class="bg-gray-50 rounded-lg p-3">
-                <p class="text-xs font-medium text-gray-500 mb-1">REASON</p>
-                <p class="text-sm text-gray-900 line-clamp-2">{{ request.reason || 'No reason provided' }}</p>
-              </div>
-            </div>
-
-            <!-- Rejection Note -->
-            <div v-if="request.approver_notes && request.status === 'rejected'" class="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-              <div class="flex items-start space-x-2">
-                <svg class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <div>
-                  <p class="text-xs font-medium text-red-700 mb-1">REJECTION REASON</p>
-                  <p class="text-xs text-red-600">{{ request.approver_notes }}</p>
+                <div class="flex justify-between text-sm">
+                  <span class="text-text-muted">Effective:</span>
+                  <span class="font-medium text-text">{{ request.formatted_effective_date }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-text-muted">Submitted:</span>
+                  <span class="font-medium text-text">{{ request.relative_date }}</span>
+                </div>
+                <div class="text-sm">
+                  <span class="text-text-muted">Reason:</span>
+                  <p class="mt-1 text-text">{{ request.reason || 'No reason provided' }}</p>
+                </div>
+                <div v-if="request.approver_notes" class="text-sm">
+                  <span class="text-text-muted">Notes:</span>
+                  <p :class="request.status === 'rejected' ? 'text-danger' : 'text-text-muted'" class="mt-1">
+                    <span v-if="request.status === 'rejected'" class="font-semibold">Rejected: </span>{{ request.approver_notes }}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Pagination sits inside the same card as the table -->
+        <div v-if="pagination && pagination.last_page > 1" class="border-t border-border px-4 py-3">
+          <div class="flex items-center justify-center gap-1">
+            <button
+              @click="goToPage(pagination.current_page - 1)"
+              :disabled="pagination.current_page === 1"
+              class="rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <template v-for="page in visiblePages" :key="page">
+              <button
+                v-if="page !== '...'"
+                @click="goToPage(page)"
+                :class="[
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  page === pagination.current_page
+                    ? 'bg-accent-solid text-white'
+                    : 'border border-border bg-surface text-text hover:bg-surface-sunken'
+                ]"
+              >
+                {{ page }}
+              </button>
+              <span v-else class="px-2 text-text-subtle">...</span>
+            </template>
+            <button
+              @click="goToPage(pagination.current_page + 1)"
+              :disabled="pagination.current_page === pagination.last_page"
+              class="rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="pagination && pagination.last_page > 1" class="mt-6 flex justify-center">
-        <nav class="flex items-center space-x-2">
-          <button
-            @click="goToPage(pagination.current_page - 1)"
-            :disabled="pagination.current_page === 1"
-            class="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          <template v-for="page in visiblePages" :key="page">
-            <button
-              v-if="page !== '...'"
-              @click="goToPage(page)"
-              :class="[
-                'px-3 py-1 rounded-lg text-sm font-medium',
-                page === pagination.current_page
-                  ? 'bg-purple-600 text-white'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-              ]"
-            >
-              {{ page }}
-            </button>
-            <span v-else class="px-2 text-gray-500">...</span>
-          </template>
-          <button
-            @click="goToPage(pagination.current_page + 1)"
-            :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </nav>
+      <!-- Hover tooltip for clamped cells. Fixed positioning so the table's
+           overflow-x-auto wrapper cannot clip it. -->
+      <div
+        v-if="tip.show"
+        class="pointer-events-none fixed z-[60] max-w-sm rounded-lg bg-text px-3 py-2 text-xs leading-relaxed text-white shadow-lg"
+        :style="{ left: tip.x + 'px', top: tip.y + 'px' }"
+      >
+        {{ tip.text }}
       </div>
     </div>
   </div>
@@ -247,7 +258,9 @@ export default {
       shiftRequests: [],
       pagination: null,
       currentStatus: 'all',
+      tip: { show: false, text: '', x: 0, y: 0 },
       filters: {
+        status: 'all',
         userName: '',
         startDate: '',
         endDate: ''
@@ -264,7 +277,7 @@ export default {
   computed: {
     statusFilters() {
       return [
-        { label: 'All', value: 'all', count: this.statusCounts.all },
+        { label: 'All Statuses', value: 'all', count: this.statusCounts.all },
         { label: 'Pending', value: 'pending', count: this.statusCounts.pending },
         { label: 'Approved', value: 'approved', count: this.statusCounts.approved },
         { label: 'Rejected', value: 'rejected', count: this.statusCounts.rejected }
@@ -332,15 +345,35 @@ export default {
       }
     },
     applyFilters() {
+      this.currentStatus = this.filters.status;
       this.appliedFilters = { ...this.filters };
       this.loadShiftRequests(1);
     },
+
+    /** Only worth a tooltip when the cell is actually clamped. */
+    showTip(event, text) {
+      const el = event.currentTarget;
+      if (!text || el.scrollHeight <= el.clientHeight + 1) return;
+      const r = el.getBoundingClientRect();
+      this.tip = {
+        show: true,
+        text,
+        x: Math.min(r.left, window.innerWidth - 400),
+        y: r.bottom + 8,
+      };
+    },
+
+    hideTip() {
+      this.tip.show = false;
+    },
     clearFilters() {
       this.filters = {
+        status: 'all',
         userName: '',
         startDate: '',
         endDate: ''
       };
+      this.currentStatus = 'all';
       this.appliedFilters = {};
       this.loadShiftRequests(1);
     },
@@ -380,11 +413,11 @@ export default {
     },
     getStatusClass(status) {
       const classes = {
-        'pending': 'bg-yellow-100 text-yellow-800',
-        'approved': 'bg-green-100 text-green-800',
-        'rejected': 'bg-red-100 text-red-800'
+        'pending': 'bg-status-yellow text-status-text',
+        'approved': 'bg-status-green text-status-text',
+        'rejected': 'bg-status-red text-status-text'
       };
-      return classes[status?.toLowerCase()] || 'bg-gray-100 text-gray-800';
+      return classes[status?.toLowerCase()] || 'bg-status-gray text-status-text';
     },
     formatTime(time) {
       if (!time) return '';
@@ -401,9 +434,9 @@ export default {
     showMessage(message, type = 'info') {
       const toast = document.createElement('div');
       toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 transition-all duration-300 ${
-        type === 'success' ? 'bg-green-500' :
-        type === 'error' ? 'bg-red-500' :
-        type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+        type === 'success' ? 'bg-success' :
+        type === 'error' ? 'bg-danger' :
+        type === 'warning' ? 'bg-warning' : 'bg-accent-solid'
       }`;
       toast.textContent = message;
       document.body.appendChild(toast);
@@ -414,11 +447,6 @@ export default {
       }, 3000);
     }
   },
-  watch: {
-    currentStatus() {
-      this.loadShiftRequests(1);
-    }
-  }
 };
 </script>
 
