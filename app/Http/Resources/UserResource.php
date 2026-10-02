@@ -17,6 +17,9 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'team_id' => $this->team_id,
             'shift_id' => $this->shift_id,
+            'hire_date' => $this->employee?->hire_date,
+            'employee_leave_type' => $this->employee?->employee_leave_type,
+            'employment_status' => $this->employee?->employment_status,
             'immediate_sup_id' => $this->immediate_sup_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
@@ -56,7 +59,7 @@ class UserResource extends JsonResource
                     'shift_type' => $this->shift->shift_type,
                     'start_time' => $this->shift->start_time?->format('g:i A'),
                     'end_time' => $this->shift->end_time?->format('g:i A'),
-                    'label' => ucfirst($this->shift->shift_type) . ' (' .
+                    'label' => '(' .
                                $this->shift->start_time?->format('g:i A') . ' - ' .
                                $this->shift->end_time?->format('g:i A') . ')',
                 ];
@@ -70,6 +73,23 @@ class UserResource extends JsonResource
                     ];
                 });
             }),
+
+            'position' => $this->whenLoaded('position', function () {
+                return [
+                    'id' => $this->position->id,
+                    'name' => $this->position->name,
+                ];
+            }),
+
+            'clients' => $this->whenLoaded('clients', function () {
+                return $this->clients->map(function ($client) {
+                    return [
+                        'id' => $client->id,
+                        'name' => $client->name,
+                    ];
+                });
+            }),
+            
         ];
     }
 

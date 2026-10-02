@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasManyThrough, HasOne};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany, HasManyThrough, HasOne};
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -25,6 +25,8 @@ use App\Models\LeaveCredit;
 use App\Models\Overtime;
 use App\Models\Project;
 use App\Models\Standup;
+use App\Models\Position;
+use App\Models\Client;
 
 use App\Traits\Sortable;
 use App\Traits\Filterable;
@@ -49,6 +51,7 @@ class User extends Authenticatable
         'status',
         'online',
         'team_id',
+        'position_id',
         'shift_id',
         'immediate_sup_id', 
     ];
@@ -72,6 +75,7 @@ class User extends Authenticatable
         'status',
         'online',
         'team_id',
+        'position_id',
         'created_at',
         'updated_at',
     ];
@@ -83,11 +87,53 @@ class User extends Authenticatable
         return $query->where('team_id', $teamId);
     }
 
+    public function scopeFilterByPosition($query, $positionId = null)
+    {
+        if (!$positionId) return $query;
+        
+        return $query->where('position_id', $positionId);
+    }
+
+    public function scopeFilterByClient($query, $clientIds = null)
+    {
+        if (empty($clientIds)) return $query;
+
+        $clientIds = is_array($clientIds)
+            ? $clientIds
+            : [$clientIds];
+
+        return $query->whereHas('clients', function ($q) use ($clientIds) {
+            $q->whereIn('clients.id', $clientIds);
+        });
+    }
+
     public function scopeFilterBySupervisor($query, $supervisorId = null)
     {
         if (!$supervisorId) return $query;
 
         return $query->where('immediate_sup_id', $supervisorId);
+    }
+
+    public function scopeFilterByEmployeeLeaveType($query, $employeeLeaveType = null)
+    {
+        if (!$employeeLeaveType) {
+            return $query;
+        }
+
+        return $query->whereHas('employee', function ($q) use ($employeeLeaveType) {
+            $q->where('employee_leave_type', $employeeLeaveType);
+        });
+    }
+
+    public function scopeFilterByEmploymentStatus($query, $employmentStatus = null)
+    {
+        if (!$employmentStatus) {
+            return $query;
+        }
+
+        return $query->whereHas('employee', function ($q) use ($employmentStatus) {
+            $q->where('employment_status', $employmentStatus);
+        });
     }
 
     public function scopeFilterByShift($query, $shiftId = null)
@@ -145,9 +191,9 @@ class User extends Authenticatable
         return $this->belongsTo(Team::class);
     }
 
-    public function shift(): BelongsTo
+    public function shift(): HasOne
     {
-        return $this->belongsTo(Shift::class);
+        return $this->hasOne(Shift::class);
     }
 
     public function immediateSupervisor(): BelongsTo
@@ -341,4 +387,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(AssociateLog::class);
     }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
+    }
+
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class);
+    }
+
 }

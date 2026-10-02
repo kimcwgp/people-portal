@@ -7,6 +7,7 @@ use App\Traits\Sortable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\{BelongsToMany, HasMany};
 
 class Client extends Model
 {
@@ -17,6 +18,7 @@ class Client extends Model
         'parent_company',
         'contact_name',
         'contact_number',
+        'description',
         'updated_at'
     ];
 
@@ -25,14 +27,17 @@ class Client extends Model
         return $this->hasMany(Project::class);
     }
 
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class);
+    }
+
     public function getProjectsCountAttribute()
     {
-        // Check if projects_count was already loaded via withCount/loadCount
         if (array_key_exists('projects_count', $this->attributes)) {
             return (int) $this->attributes['projects_count'];
         }
 
-        // Fallback - avoid using this in loops
         return $this->projects()->count();
     }
 }

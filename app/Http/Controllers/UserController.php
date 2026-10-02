@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Team, Shift};
+use App\Models\{User, Team, Shift, Position, Client, Employee};
 use App\Http\Requests\UserManagement\{StoreUserRequest, UpdateUserRequest};
 use App\Http\Resources\UserResource;
 use App\Services\UserService;
@@ -23,7 +23,7 @@ class UserController extends Controller
     {
         $perPage = $this->getPerPageLimit('users', $request->input('per_page'));
 
-        $query = User::query()->with(['team', 'shift', 'immediateSupervisor', 'roles']);
+        $query = User::query()->with(['team', 'shift', 'immediateSupervisor', 'roles', 'position', 'clients', 'employee']);
 
         $this->applyFilters($query, $request);
 
@@ -50,8 +50,32 @@ class UserController extends Controller
             $query->search($request->input('search'));
         }
 
+        if ($request->filled('user_id')) {
+            $query->where('id', $request->input('user_id'));
+        }
+
         if ($request->filled('team_id')) {
             $query->filterByTeam($request->input('team_id'));
+        }
+
+        if ($request->filled('position_id')) {
+            $query->filterByPosition($request->input('position_id'));
+        }
+
+        if ($request->filled('client_id')) {
+            $query->filterByClient($request->input('client_id'));
+        }
+
+        if ($request->filled('employee_leave_type')) {
+            $query->FilterByEmployeeLeaveType(
+                $request->input('employee_leave_type')
+            );
+        }
+
+        if ($request->filled('employment_status')) {
+            $query->filterByEmploymentStatus(
+                $request->input('employment_status')
+            );
         }
 
         if ($request->filled('shift_id')) {
@@ -100,7 +124,38 @@ class UserController extends Controller
     {
         return Cache::remember('user_filter_options', 3600, function () {
             return [
-                'teams' => Team::select('id', 'name')->orderBy('name')->get(),
+                'users' => User::select('id', 'name')
+                ->whereNotNull('name')
+                ->orderBy('name')
+                ->get(),
+
+                'teams' => Team::select('id', 'name')
+                    ->orderBy('name')
+                    ->get(),
+
+                'positions' => Position::select('id', 'name')
+                    ->orderBy('name')
+                    ->get(),
+
+                'clients' => Client::select('id', 'name')
+                    ->orderBy('name')
+                    ->get(),
+
+                'hire_date' => Employee::select('hire_date')
+                    ->distinct()
+                    ->orderBy('hire_date')
+                    ->get(),
+
+                'employee_leave_types' => Employee::select('employee_leave_type')
+                    ->distinct()
+                    ->orderBy('employee_leave_type')
+                    ->get(),
+
+                'employment_statuses' => Employee::select('employment_status')
+                    ->distinct()
+                    ->orderBy('employment_status')
+                    ->get(),
+
                 'shifts' => Shift::select('id', 'shift_type', 'start_time', 'end_time')
                     ->orderBy('shift_type')
                     ->get()
@@ -110,12 +165,14 @@ class UserController extends Controller
                             'shift_type' => $shift->shift_type,
                             'start_time' => $shift->start_time->format('g:i A'),
                             'end_time' => $shift->end_time->format('g:i A'),
-                            'label' => ucfirst($shift->shift_type) . ' (' .
-                                       $shift->start_time->format('g:i A') . ' - ' .
-                                       $shift->end_time->format('g:i A') . ')',
+                            'label' => '(' .
+                                    $shift->start_time->format('g:i A') . ' - ' .
+                                    $shift->end_time->format('g:i A') . ')',
                         ];
                     }),
+
                 'supervisors' => $this->userService->getPotentialSupervisors(),
+
                 'roles' => Role::where('guard_name', 'sanctum')
                     ->select('id', 'name')
                     ->orderBy('name')
@@ -138,7 +195,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
-                'user' => new UserResource($user->load(['team', 'shift', 'immediateSupervisor', 'roles']))
+                'user' => new UserResource($user->load(['team', 'shift', 'immediateSupervisor', 'roles', 'position']))
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -150,7 +207,7 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
-        $user->load(['team', 'shift', 'immediateSupervisor', 'directSubordinates', 'roles']);
+        $user->load(['team', 'psotion', 'shift', 'immediateSupervisor', 'directSubordinates', 'roles', 'position']);
         
         return response()->json([
             'user' => new UserResource($user),
@@ -167,7 +224,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User updated successfully',
-                'user' => new UserResource($updatedUser->load(['team', 'shift', 'immediateSupervisor', 'roles']))
+                'user' => new UserResource($updatedUser->load(['team', 'shift', 'immediateSupervisor', 'roles', 'position']))
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -201,13 +258,14 @@ class UserController extends Controller
             'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
             'team_id' => 'required_if:action,assign_team|nullable|exists:teams,id',
+            'position_id' => 'required_if:action,assign_position|nullable|exists:positions,id',
             'role_id' => 'required_if:action,assign_role,remove_role|nullable|exists:roles,id',
         ]);
 
         $result = $this->userService->performBulkAction(
             $request->action,
             $request->user_ids,
-            $request->only(['team_id', 'role_id'])
+            $request->only(['team_id', 'role_id', 'position_id'])
         );
         
         return response()->json($result);
@@ -215,7 +273,7 @@ class UserController extends Controller
 
     public function export(Request $request): JsonResponse
     {
-        $query = User::query()->with(['team', 'shift', 'immediateSupervisor', 'roles']);
+        $query = User::query()->with(['team', 'position', 'shift', 'immediateSupervisor', 'roles', 'position']);
         
         $this->applyFilters($query, $request);
 

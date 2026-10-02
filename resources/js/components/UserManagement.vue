@@ -1,91 +1,369 @@
 <template>
   <div class="p-6 space-y-6">
+    
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
+        <h1 class="text-2xl font-semibold page-heading">User Management</h1>
       </div>
       <button
         @click="openCreateModal"
-        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+        class="px-4 py-2 transition-colors add-btn"
       >
-        + ADD USER
+        Add Employee
       </button>
     </div>
 
     <!-- Stats Cards -->
-    <div v-if="stats" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div v-if="stats" class="grid grid-cols-4 md:grid-cols-4 gap-4">
       <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-        <p class="text-sm text-gray-600">Total Users</p>
-        <p class="text-2xl font-bold text-gray-900">{{ stats.total_users }}</p>
+        <p class="text-sm font-semibold stat-label">Total</p>
+        <p class="text-2xl font-semibold stat-value">{{ stats.total_users }}</p>
       </div>
       <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-        <p class="text-sm text-gray-600">Active</p>
-        <p class="text-2xl font-bold text-green-600">{{ stats.active_users }}</p>
+        <p class="text-sm font-semibold stat-label">Regular</p>
+        <p class="text-2xl font-semibold stat-value">{{ stats.regular_users }}</p>
       </div>
       <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-        <p class="text-sm text-gray-600">Inactive</p>
-        <p class="text-2xl font-bold text-amber-600">{{ stats.inactive_users }}</p>
+        <p class="text-sm font-semibold stat-label">Probationary</p>
+        <p class="text-2xl font-semibold stat-value">{{ stats.probationary_users }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+        <p class="text-sm font-semibold stat-label">Turnover</p>
+        <p class="text-2xl font-semibold stat-value">{{ stats.turnover_users }}</p>
       </div>
     </div>
 
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Search -->
-        <div>
-          <input
-            v-model="filters.search"
-            @input="handleSearch"
-            type="text"
-            placeholder="Search users..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-        </div>
+      <div class="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-7 gap-4">
 
-        <!-- Team Filter -->
-        <div>
-          <select
-            v-model="filters.team_id"
-            @change="applyFilters"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        <!-- User Filter -->
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
           >
-            <option value="">All Teams</option>
-            <option v-for="team in filterOptions.teams" :key="team.id" :value="team.id">
-              {{ team.name }}
+
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              User
+            </legend>
+
+          <select
+            v-model="filters.user_id"
+            @change="applyFilters"
+            class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+          >
+            <option value="">All</option>
+            <option v-for="user  in filterOptions.users" :key="user.id" :value="user.id">
+              {{ user.name }}
             </option>
           </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+          </fieldset>
         </div>
 
         <!-- Role Filter -->
-        <div>
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Role
+            </legend>
+
           <select
             v-model="filters.role_id"
             @change="applyFilters"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
           >
-            <option value="">All Roles</option>
+            <option value="">All</option>
             <option v-for="role in filterOptions.roles" :key="role.id" :value="role.id">
               {{ role.name }}
             </option>
           </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+          </fieldset>
+        </div>
+
+        <!-- Position Filter -->
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Position
+            </legend>
+
+            <select
+              v-model="filters.position_id"
+              @change="applyFilters"
+              class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+            >
+              <option value="">All</option>
+
+              <option
+                v-for="position in filterOptions.positions"
+                :key="position.id"
+                :value="position.id"
+              >
+                {{ position.name }}
+              </option>
+            </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+          </fieldset>
+        </div>
+
+        <!-- Team Filter -->
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Team
+            </legend>
+
+            <select
+              v-model="filters.team_id"
+              @change="applyFilters"
+              class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+            >
+              <option value="">All</option>
+
+              <option
+                v-for="team in filterOptions.teams"
+                :key="team.id"
+                :value="team.id"
+              >
+                {{ team.name }}
+              </option>
+            </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+          </fieldset>
+        </div>
+
+        <!-- Assigned Client Filter -->
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Assigned Client
+            </legend>
+
+            <select
+              v-model="filters.client_id"
+              @change="applyFilters"
+              class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+            >
+              <option value="">All</option>
+
+              <option
+                v-for="client in filterOptions.clients"
+                :key="client.id"
+                :value="client.id"
+              >
+                {{ client.name }}
+              </option>
+            </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+          </fieldset>
+        </div>
+
+        <!-- Supervisor Filter -->
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Supervisor
+            </legend>
+
+            <select
+              v-model="filters.supervisor_id"
+              @change="applyFilters"
+              class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+            >
+              <option value="">All</option>
+
+              <option
+                v-for="supervisor in filterOptions.supervisors"
+                :key="supervisor.id"
+                :value="supervisor.id"
+              >
+                {{ supervisor.name }}
+              </option>
+            </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+          </fieldset>
         </div>
 
         <!-- Status Filter -->
-        <div>
-          <select
-            v-model="filters.status"
-            @change="applyFilters"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
           >
-            <option value="">All Status</option>
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
-          </select>
+
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Status
+            </legend>
+
+            <select
+              v-model="filters.employment_status"
+              @change="applyFilters"
+              class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+            >
+              <option value="">All</option>
+              <option
+                v-for="status in filterOptions.employment_statuses"
+                :key="status.employment_status"
+                :value="status.employment_status"
+              >
+                {{ status.employment_status }}
+              </option>
+            </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+            
+          </fieldset>
+        </div>
+
+        <!-- Leave Type Filter -->
+        <div class="relative">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 pb-2 pt-1
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+
+            <legend class="px-1 text-sm text-[#9da0b2]" style="background: white;">
+              Leave Type
+            </legend>
+
+            <select
+              v-model="filters.employee_leave_type"
+              @change="applyFilters"
+              class="w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+            >
+              <option value="">All</option>
+              <option
+                v-for="leave_type in filterOptions.employee_leave_types"
+                :key="leave_type.employee_leave_type"
+                :value="leave_type.employee_leave_type" class="capitalize"
+              >
+                {{ leave_type.employee_leave_type }}
+              </option>
+            </select>
+
+            <!-- Custom dropdown arrow -->
+            <svg
+              class="pointer-events-none absolute right-4 top-1/2 h-5 w-5
+                    -translate-y-1/2 text-[#9699a8]"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5 7.5L10 12.5L15 7.5H5Z" />
+            </svg>
+            
+          </fieldset>
+        </div>
+
+        <!-- Search -->
+        <div class="col-span-2">
+          <fieldset
+            class="relative rounded-xl border border-[#c5c7d3] px-4 mt-2
+                  focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+          >
+
+          <input
+            v-model="filters.search"
+            @input="handleSearch"
+            type="text"
+            placeholder="Search Employee Information"
+            class="py-3 text-sm w-full appearance-none bg-transparent pr-8 text-[16px] text-[#555765]
+                    outline-none"
+          >
+          </fieldset>
         </div>
 
         <!-- Per Page -->
-        <div class="flex items-center gap-2">
+        <!-- <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600 whitespace-nowrap">Show:</label>
           <select
             v-model="perPage"
@@ -97,7 +375,8 @@
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-        </div>
+        </div> -->
+
       </div>
       
       <!-- Clear Filters Button -->
@@ -109,181 +388,250 @@
           Clear All Filters
         </button>
       </div>
-    </div>
+    
+      <!-- Users Table -->
+      <div class="bg-white rounded-xl mt-4 shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="rounded-xl w-full border-1 border-[#000]">
+            <thead class="bg-[var(--title-background)] text-[var(--heading)]">
+              <tr>
+                <th class="text-sm text-left p-4 font-semibold">User</th>
+                <th class="text-sm text-left p-4 font-semibold">Role</th>
+                <th class="text-sm text-left p-4 font-semibold">Position</th>
+                <th class="text-sm text-left p-4 font-semibold">Team</th>
+                <th class="text-sm text-left p-4 font-semibold">Assigned Client</th>
+                <th class="text-sm text-left p-4 font-semibold">Supervisor</th>
+                <th class="text-sm text-left p-4 font-semibold">Shift</th>
+                <th class="text-sm text-center p-4 font-semibold">Status</th>
+                <th class="text-sm text-center p-4 font-semibold">Hired Date</th>
+                <th class="text-sm text-center p-4 font-semibold">Leave Type</th>
+                <th class="text-sm text-center p-4 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
+                <!-- User -->
+                <td class="p-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-semibold">
+                      {{ user.initials }}
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                      <div class="text-[10px] text-gray-500">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
 
-    <!-- Users Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-green-600 text-white">
-            <tr>
-              <th class="text-left p-4 font-semibold">USER</th>
-              <th class="text-left p-4 font-semibold">ROLE</th>
-              <th class="text-left p-4 font-semibold">TEAM</th>
-              <th class="text-left p-4 font-semibold">SHIFT</th>
-              <th class="text-left p-4 font-semibold">SUPERVISOR</th>
-              <th class="text-center p-4 font-semibold">STATUS</th>
-              <th class="text-center p-4 font-semibold">ACTION</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
-              <td class="p-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-semibold">
-                    {{ user.initials }}
+                <!-- Role -->
+                <td class="p-4">
+                  <div v-if="user.roles && user.roles.length > 0" class="flex flex-wrap gap-1">
+                    <span
+                      v-for="role in user.roles"
+                      :key="role.id"
+                      class="text-xs text-gray-900"
+                    >
+                      {{ role.name }}
+                    </span>
                   </div>
-                  <div>
-                    <div class="font-medium text-gray-900">{{ user.name }}</div>
-                    <div class="text-sm text-gray-500">{{ user.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="p-4">
-                <div v-if="user.roles && user.roles.length > 0" class="flex flex-wrap gap-1">
-                  <span
-                    v-for="role in user.roles"
-                    :key="role.id"
-                    class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium"
-                  >
-                    {{ role.name }}
+                  <span v-else class="text-xs text-gray-400 italic">No role</span>
+                </td>
+
+                <!-- Position -->
+                <td class="p-4">
+                  <span v-if="user.position" class="text-xs text-gray-900">
+                    {{ user.position.name }}
                   </span>
-                </div>
-                <span v-else class="text-sm text-gray-400 italic">No role</span>
-              </td>
-              <td class="p-4">
-                <span v-if="user.team" class="text-sm text-gray-900">
-                  {{ user.team.name }}
-                </span>
-                <span v-else class="text-sm text-gray-400 italic">No team</span>
-              </td>
-              <td class="p-4">
-                <span v-if="user.shift" class="text-xs text-gray-900">
-                  {{ user.shift.label }}
-                </span>
-                <span v-else class="text-sm text-gray-400 italic">No shift</span>
-              </td>
-              <td class="p-4">
-                <span v-if="user.immediate_supervisor" class="text-sm text-gray-900">
-                  {{ user.immediate_supervisor.name }}
-                </span>
-                <span v-else class="text-sm text-gray-400 italic">No supervisor</span>
-              </td>
-              <td class="p-4 text-center">
-                <span
-                  :class="[
-                    'px-3 py-1 rounded-full text-xs font-medium',
-                    user.status ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                  ]"
-                >
-                  {{ user.status_text }}
-                </span>
-              </td>
-              <td class="p-4 text-center">
-                <div class="flex justify-center space-x-2">
-                  <button
-                    @click="viewUser(user)"
-                    class="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-                    title="View"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </button>
-                  <button
-                    @click="editUser(user)"
-                    class="bg-green-600 text-white p-2 rounded hover:bg-green-700"
-                    title="Edit"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-                    </svg>
-                  </button>
-                  <button
-                    @click="confirmDelete(user)"
-                    class="bg-red-600 text-white p-2 rounded hover:bg-red-700"
-                    title="Delete"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <span v-else class="text-xs text-gray-400 italic">No position</span>
+                </td>
 
-        <div v-if="loading" class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-        </div>
+                <!-- Team -->
+                <td class="p-4">
+                  <span v-if="user.team" class="text-xs text-gray-900">
+                    {{ user.team.name }}
+                  </span>
+                  <span v-else class="text-xs text-gray-400 italic">No team</span>
+                </td>
 
-        <div v-if="!users.length && !loading" class="text-center py-12">
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-          <p class="mt-1 text-sm text-gray-500">
-            {{ hasActiveFilters ? 'Try adjusting your filters.' : 'Get started by adding a new user.' }}
-          </p>
+                <!-- Assigned Client -->
+                <td class="p-4">
+                  <span v-if="user.clients?.length" class="text-xs text-gray-900 whitespace-pre-line">
+                    {{ user.clients.map(client => client.name).join(',\n') }}
+                  </span>
+                  <span v-else class="text-xs text-gray-400 italic">No assigned client</span>
+                </td>
+
+                <!-- Supervisor -->
+                <td class="p-4">
+                  <span v-if="user.immediate_supervisor" class="text-xs text-gray-900">
+                    {{ user.immediate_supervisor.name }}
+                  </span>
+                  <span v-else class="text-xs text-gray-400 italic">No supervisor</span>
+                </td>
+
+                <!-- Shift -->
+                <td class="p-4">
+                  <span v-if="user.shift" class="text-xs text-gray-900">
+                    {{ user.shift.label }}
+                    
+                    <span
+                      class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium capitalize"
+                      :style="user.shift.shift_type === 'fixed'
+                        ? {
+                            color: 'var(--green-dark)',
+                            backgroundColor: 'var(--fill-green)'
+                          }
+                        : {
+                            color: 'var(--blue-dark)',
+                            backgroundColor: 'var(--fill-blue)'
+                          }"
+                    >
+                      {{ user.shift.shift_type }}
+                    </span>
+                  </span>
+
+                  <span v-else class="text-xs text-gray-400 italic">
+                    No shift
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td class="p-4 text-center">
+                  <span v-if="user.employment_status" class="text-xs text-gray-900">
+                    {{ user.employment_status }}
+                  </span>
+                  <span v-else class="text-xs text-gray-400 italic">No status</span>
+                </td>
+
+                <!-- Hired Date -->
+                <td class="p-4 text-center">
+                  <span v-if="user.hire_date" class="text-xs text-gray-900">
+                    {{ new Date(user.hire_date).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: '2-digit',
+                        year: 'numeric'
+                    }) }}
+                  </span>
+                  <span v-else class="text-xs text-gray-400 italic">No hired date</span>
+                </td>
+
+                <!-- Leave Type -->
+                <td class="p-4 text-center">
+                  <span v-if="user.employee_leave_type" class="text-xs text-gray-900 capitalize">
+                    {{ user.employee_leave_type }}
+                  </span>
+                  <span v-else class="text-xs text-gray-400 italic">No leave type</span>
+                </td>
+
+                <!-- Actions -->
+                <td class="p-4 text-center">
+                  <div class="flex justify-center space-x-2">
+                    <button
+                      @click="viewUser(user)"
+                      class="bg-[var(--green-dark)] text-white p-2 rounded"
+                      title="View"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </button>
+                    <button
+                      @click="editUser(user)"
+                      class="bg-[var(--orange-dark)] text-white p-2 rounded"
+                      title="Edit"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                      </svg>
+                    </button>
+                    <button
+                      @click="confirmDelete(user)"
+                      class="bg-[var(--red-dark)] text-white p-2 rounded"
+                      title="Delete"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div v-if="loading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+
+          <div v-if="!users.length && !loading" class="text-center py-12">
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ hasActiveFilters ? 'Try adjusting your filters.' : 'Get started by adding a new user.' }}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Pagination Controls -->
-    <div v-if="pagination.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div class="text-sm text-gray-600">
-          Showing <span class="font-medium">{{ pagination.from }}</span> to 
-          <span class="font-medium">{{ pagination.to }}</span> of 
-          <span class="font-medium">{{ pagination.total }}</span> results
-        </div>
+      <!-- Pagination Controls -->
+      <div v-if="pagination.total > 0" class="p-4">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="text-sm text-gray-600">
+            Showing <span class="font-medium">{{ pagination.from }}</span> to 
+            <span class="font-medium">{{ pagination.to }}</span> of 
+            <span class="font-medium">{{ pagination.total }}</span> results
+          </div>
 
-        <div class="flex items-center gap-2">
-          <button
-            @click="goToPage(pagination.current_page - 1)"
-            :disabled="pagination.current_page === 1"
-            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-
-          <div class="hidden sm:flex gap-1">
+          <div class="flex items-center gap-2">
             <button
-              v-for="page in visiblePages"
-              :key="page"
-              @click="page !== '...' && goToPage(page)"
-              :disabled="page === '...'"
-              class="min-w-[40px] px-3 py-2 border rounded-lg transition-colors"
-              :class="[
-                page === pagination.current_page
-                  ? 'bg-green-600 text-white border-green-600 font-medium'
-                  : page === '...'
-                  ? 'border-gray-300 cursor-default'
-                  : 'border-gray-300 hover:bg-gray-50'
-              ]"
+              @click="goToPage(pagination.current_page - 1)"
+              :disabled="pagination.current_page === 1"
+              class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {{ page }}
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+
+            <div class="hidden sm:flex gap-1">
+              <button
+                v-for="page in visiblePages"
+                :key="page"
+                @click="page !== '...' && goToPage(page)"
+                :disabled="page === '...'"
+                class="min-w-[40px] px-3 py-2 border rounded-lg transition-colors"
+                :class="[
+                  page === pagination.current_page
+                    ? 'bg-green-600 text-white border-green-600 font-medium'
+                    : page === '...'
+                    ? 'border-gray-300 cursor-default'
+                    : 'border-gray-300 hover:bg-gray-50'
+                ]"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <div class="sm:hidden px-4 py-2 border border-gray-300 rounded-lg bg-white">
+              <span class="font-medium">{{ pagination.current_page }}</span>
+              <span class="text-gray-500"> / {{ pagination.last_page }}</span>
+            </div>
+
+            <button
+              @click="goToPage(pagination.current_page + 1)"
+              :disabled="pagination.current_page === pagination.last_page"
+              class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
             </button>
           </div>
-
-          <div class="sm:hidden px-4 py-2 border border-gray-300 rounded-lg bg-white">
-            <span class="font-medium">{{ pagination.current_page }}</span>
-            <span class="text-gray-500"> / {{ pagination.last_page }}</span>
-          </div>
-
-          <button
-            @click="goToPage(pagination.current_page + 1)"
-            :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-          </button>
         </div>
       </div>
+
     </div>
+
 
     <!-- Create/Edit User Modal -->
     <div v-if="showCreateModal || showEditModal" class="fixed inset-0 flex items-center justify-center z-50">
@@ -570,6 +918,25 @@
   </div>
 </template>
 
+<style>
+  .add-btn {
+    color: var(--text-color-white);
+    background: var(--accent-gold);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .stat-label {
+    color: var(--subheading);
+  }
+
+  .stat-value {
+    color: var(--heading);
+  }
+  
+</style>
+
 <script>
 import { ref, reactive, computed, onMounted } from 'vue'
 import axios from 'axios'
@@ -584,7 +951,12 @@ export default {
     const users = ref([])
     const stats = ref(null)
     const filterOptions = ref({
+      users: [],
       teams: [],
+      positions: [],
+      clients: [],
+      employee_leave_types: [],
+      employment_statuses: [],
       shifts: [],
       supervisors: [],
       roles: []
@@ -602,7 +974,12 @@ export default {
 
     const filters = reactive({
       search: '',
+      user_id: '',
       team_id: '',
+      position_id: '',
+      client_id: '',
+      employee_leave_type: '',
+      employment_status: '',
       shift_id: '',
       role_id: '',
       status: '',
@@ -615,7 +992,12 @@ export default {
       glip_url: '',
       password: '',
       role_id: '',
+      user_id: '',
       team_id: '',
+      position_id: '',
+      client_id: '',
+      employee_leave_type: '',
+      employment_status: '',
       shift_id: '',
       immediate_sup_id: '',
       status: true
@@ -629,7 +1011,7 @@ export default {
     const userToDelete = ref(null)
 
     const hasActiveFilters = computed(() => {
-      return filters.search || filters.team_id || filters.shift_id || 
+      return filters.search || filters.user_id || filters.team_id || filters.position_id || filters.client_id || filters.employee_leave_type || filters.employment_status || filters.shift_id || 
              filters.role_id || filters.status !== '' || filters.supervisor_id
     })
 
@@ -757,6 +1139,8 @@ export default {
         userForm.password = ''
         userForm.role_id = userData.roles && userData.roles.length > 0 ? userData.roles[0].id : ''
         userForm.team_id = userData.team_id || ''
+        userForm.position_id = userData.position_id || ''
+        userForm.client_id = userData.client_id || ''
         userForm.shift_id = userData.shift_id || ''
         userForm.immediate_sup_id = userData.immediate_sup_id || ''
         userForm.status = userData.status
@@ -768,6 +1152,8 @@ export default {
         userForm.password = ''
         userForm.role_id = user.roles && user.roles.length > 0 ? user.roles[0].id : ''
         userForm.team_id = user.team_id || ''
+        userForm.position_id = user.position_id || ''
+        userForm.client_id = userData.client_id || ''
         userForm.shift_id = user.shift_id || ''
         userForm.immediate_sup_id = user.immediate_sup_id || ''
         userForm.status = user.status
@@ -845,6 +1231,8 @@ export default {
       userForm.password = ''
       userForm.role_id = ''
       userForm.team_id = ''
+      userForm.position_id = ''
+      userForm.client_id = ''
       userForm.shift_id = ''
       userForm.immediate_sup_id = ''
       userForm.status = true

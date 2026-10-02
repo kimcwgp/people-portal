@@ -3,5 +3,58 @@
 @tailwind components;
 @tailwind utilities; */
 
+:root {
+    /* Fonts */
+    --inter: 'Inter', sans-serif;
+
+    /* Primary */
+    --text-color-black:  #090838;
+    --text-color-white: #FFFFFF;
+    --accent-gold: #C6973D;
+
+    /* Secondary */
+    --background-color: #ECECFA;
+    --card-white: #FCFCFC;
+    --line : #C1C2CF;
+
+    /* Tertiary */
+    --red-dark: #C1121F;
+    --green-dark: #15661F;
+    --orange-dark: #FF780F;
+    --blue-dark: #3A1DF8;
+    
+    /* Fill background status */
+    --fill-text: #090809;
+    --fill-green: #DCFCDF;
+    --fill-red: #FFF1F2;
+    --fill-orange: #FFEED4;
+    --fill-yellow: #FCFCC5;
+    --fill-blue: #D6EFFF;
+    --fill-indigo: #EBE9FF;
+    --fill-cyan: #D6EFFF;
+    --fill-purple: #D3D5FF;
+    --fill-gray: #EEF0F0;
+
+    /* Table */
+    --title-background: #F2F3FF;
+    --cell-background: #FFFFFF;
+    --table-border: #EBE9FF;
+    --table-text: #090809;
+
+    /* Heading */
+    --heading: #3E404E;
+    --subheading: #8C91A4;
+
+}
+
+html {
+    font-family: var(--inter);
+}
+
+.page-heading {
+    color: var(--heading);
+}
+
+
 
 

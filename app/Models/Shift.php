@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsTo};
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\Sortable;
 use App\Traits\Filterable;
@@ -14,6 +14,7 @@ class Shift extends Model
     use HasFactory, Sortable, Filterable;
 
     protected $fillable = [
+        'user_id',
         'shift_type',
         'start_time',
         'end_time',
@@ -26,6 +27,7 @@ class Shift extends Model
 
     protected $sortable = [
         'id',
+        'user_id',
         'shift_type',
         'start_time',
         'end_time',
@@ -38,9 +40,9 @@ class Shift extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    public function users(): HasMany
+    public function users(): BelongsTo
     {
-        return $this->hasMany(User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function getShiftLabelAttribute(): string

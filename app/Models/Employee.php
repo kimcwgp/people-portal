@@ -18,6 +18,7 @@ class Employee extends Model
         'regularization_date',
         'resignation_date',
         'employee_status',
+        'employee_leave_type',
         'employment_status',
         'employment_type',
         'termination_reason',

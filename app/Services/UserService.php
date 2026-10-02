@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{User, Team};
+use App\Models\{User, Team, Employee};
 use Illuminate\Support\Facades\{DB, Hash};
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -13,6 +13,17 @@ class UserService
     {
         return [
             'total_users' => User::count(),
+            'regular_users' => User::whereHas('employee', function ($query) {
+                $query->where('employment_status', 'Regular');
+            })->count(),
+
+            'probationary_users' => User::whereHas('employee', function ($query) {
+                $query->where('employment_status', 'Probationary');
+            })->count(),
+
+            'turnover_users' => User::whereHas('employee', function ($query) {
+                $query->where('employment_status', 'Turnover');
+            })->count(),
             'active_users' => User::where('status', true)->count(),
             'inactive_users' => User::where('status', false)->count(),
             'online_users' => User::where('online', true)->count(),

@@ -22,14 +22,6 @@ return new class extends Migration
             $table->index('deleted_at');
         });
 
-        Schema::create('shifts', function (Blueprint $table) {
-            $table->id();
-            $table->enum('shift_type', ['day', 'night']);
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->timestamps();
-        });
-
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -40,7 +32,7 @@ return new class extends Migration
             $table->boolean('status')->default(1);
             $table->boolean('online')->default(0);
             $table->unsignedBigInteger('team_id')->nullable();
-            $table->unsignedBigInteger('shift_id')->nullable();
+            // $table->unsignedBigInteger('shift_id')->nullable();
             $table->unsignedBigInteger('immediate_sup_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
@@ -55,8 +47,17 @@ return new class extends Migration
 
             // Foreign keys
             $table->foreign('team_id')->references('id')->on('teams')->nullOnDelete();
-            $table->foreign('shift_id')->references('id')->on('shifts')->nullOnDelete();
+            // $table->foreign('shift_id')->references('id')->on('shifts')->nullOnDelete();
             $table->foreign('immediate_sup_id')->references('id')->on('users')->nullOnDelete();
+        });
+
+        Schema::create('shifts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->unique()->constrained('users')->cascadeOnDelete();
+            $table->enum('shift_type', ['fixed', 'flexible']);
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->timestamps();
         });
 
         // Add foreign key for team_head_id after users table is created
@@ -106,6 +107,7 @@ return new class extends Migration
             // Status
             $table->enum('employee_status', ['active', 'inactive', 'terminated', 'resigned'])
                   ->default('active');
+            $table->enum('employee_leave_type', ['fixed', 'accrual']);
             $table->enum('employment_type', ['full_time', 'part_time', 'contract', 'intern', 'consultant'])
                   ->default('full_time');
             
