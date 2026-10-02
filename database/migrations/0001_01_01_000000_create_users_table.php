@@ -106,9 +106,9 @@ return new class extends Migration
             // Status
             $table->enum('employee_status', ['active', 'inactive', 'terminated', 'resigned'])
                   ->default('active');
-            $table->enum('employment_status', ['Probationary', 'Regular', 'Resigned'])
+            $table->enum('employment_status', ['Probationary', 'Regular', 'Turnover'])
                   ->nullable()
-                  ->comment('Employment status: Probationary, Regular, or Resigned');
+                  ->comment('Employment status: Probationary, Regular, or Turnover');
             $table->enum('employee_leave_type', ['fixed', 'accrual']);
             $table->enum('employment_type', ['full_time', 'part_time', 'contract', 'intern', 'consultant'])
                   ->default('full_time');

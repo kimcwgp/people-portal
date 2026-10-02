@@ -29,7 +29,7 @@
               <option value="">All Employees</option>
               <option value="probationary">Probationary</option>
               <option value="regular">Regular</option>
-              <option value="resigned">Resigned</option>
+              <option value="turnover">Turnover</option>
             </select>
           </div>
           <div>
@@ -155,7 +155,7 @@
               <option value="">Select Status</option>
               <option value="Probationary">Probationary</option>
               <option value="Regular">Regular</option>
-              <option value="Resigned">Resigned</option>
+              <option value="Turnover">Turnover</option>
             </select>
           </div>
 
@@ -281,7 +281,7 @@ const getStatusBadgeClass = (status) => {
       return `${baseClass} bg-green-100 text-green-800`;
     case 'probationary':
       return `${baseClass} bg-yellow-100 text-yellow-800`;
-    case 'resigned':
+    case 'turnover':
       return `${baseClass} bg-gray-100 text-gray-800`;
     default:
       return `${baseClass} bg-gray-100 text-gray-800`;

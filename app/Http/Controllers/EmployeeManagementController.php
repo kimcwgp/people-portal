@@ -46,7 +46,7 @@ class EmployeeManagementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'hire_date' => 'required|date',
-            'employment_status' => 'required|in:Probationary,Regular,Resigned',
+            'employment_status' => 'required|in:Probationary,Regular,Turnover',
             'regularization_date' => 'nullable|date',
         ]);
 

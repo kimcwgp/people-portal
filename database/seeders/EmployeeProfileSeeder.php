@@ -142,7 +142,7 @@ class EmployeeProfileSeeder extends Seeder
             'dob' => '1988-12-01', 'gender' => 'female', 'marital' => 'widowed', 'spouse' => null, 'children' => 2,
         ],
         'miguel.pascual@peopleportal.test' => [
-            'hire' => '2022-03-07', 'type' => 'full_time', 'status' => 'Resigned',
+            'hire' => '2022-03-07', 'type' => 'full_time', 'status' => 'Turnover',
             'position' => 'Sales Executive', 'level' => 'Mid', 'career' => 'Individual Contributor', 'band' => 'Band 3', 'zone' => 'Zone C', 'manager' => false,
             'salary' => 58000, 'allowances' => 8000, 'bonuses' => 20000,
             'dob' => '1992-02-24', 'gender' => 'male', 'marital' => 'married', 'spouse' => 'Rowena Pascual', 'children' => 2,
