@@ -22,7 +22,7 @@
             </style>
         @endif
     </head>
-  <body class="min-h-screen bg-gray-50">
+  <body class="min-h-screen bg-canvas">
     <div id="app"></div>
   </body>
 </html>
