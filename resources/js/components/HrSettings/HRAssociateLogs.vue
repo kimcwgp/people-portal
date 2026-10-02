@@ -24,7 +24,7 @@
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
-              <div class="flex items-center justify-center h-8 w-8 rounded-full bg-white bg-opacity-20">
+              <div class="flex items-center justify-center h-8 w-8 rounded-full bg-white/20">
                 <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -72,7 +72,7 @@
                     v-model="userSearch"
                     type="text"
                     placeholder="Search employees by name, email, or department..."
-                    class="block w-full rounded-lg border border-gray-300 pl-10 pr-10 py-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
+                    class="block w-full rounded-lg border border-gray-300 pl-10 pr-10 py-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                   <div v-if="userSearch" class="absolute inset-y-0 right-0 flex items-center pr-3">
                     <button
@@ -329,7 +329,7 @@
                 v-model="form.date"
                 type="date"
                 required
-                class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
+                class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 :class="{ 'border-red-300 bg-red-50': errors.date }"
               />
               <p v-if="errors.date" class="mt-1 text-sm text-red-600 flex items-center">
@@ -353,7 +353,7 @@
                   @change="handleFileChange"
                   type="file"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
+                  class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   :class="{ 'border-red-300 bg-red-50': errors.attachment }"
                 />
               </div>
@@ -382,7 +382,7 @@
               rows="4"
               required
               placeholder="Enter detailed log information..."
-              class="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
+              class="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
               :class="{ 'border-red-300 bg-red-50': errors.entry_details }"
             ></textarea>
             <div class="mt-1 flex justify-between items-center">
