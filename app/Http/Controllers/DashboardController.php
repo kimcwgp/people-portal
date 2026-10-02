@@ -7,8 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{Auth, Log, DB};
 use App\Http\Requests\{ClockActionRequest, BreakActionRequest, ApprovalRequest};
 use App\Http\Resources\{DashboardResource, TimeInOutResource};
-use App\Services\{AttendanceService, RingCentralService};
-use App\Models\{Leave, Overtime, ShiftChangeRequest, AttendanceCorrection, User};
+use App\Services\AttendanceService;
+use App\Models\{Leave, ShiftChangeRequest, AttendanceCorrection, Timesheet, User};
 
 class DashboardController extends Controller
 {
@@ -201,12 +201,6 @@ class DashboardController extends Controller
                     'approver_id' => $user->id,
                     'approved_at' => now(),
                 ]);
-
-                if (!empty($leave->user->glip_url)) {
-                    $this->attendanceService->sendLeaveApprovalNotification(
-                        $leave, 'approved', $user, $leave->user->glip_url
-                    );
-                }
             });
 
             return response()->json([
@@ -247,12 +241,6 @@ class DashboardController extends Controller
                     'rejection_note' => $request->rejection_note,
                     'rejected_at' => now(),
                 ]);
-
-                if (!empty($leave->user->glip_url)) {
-                    $this->attendanceService->sendLeaveApprovalNotification(
-                        $leave, 'rejected', $user, $leave->user->glip_url, $request->rejection_note
-                    );
-                }
             });
 
             return response()->json([
@@ -276,97 +264,6 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to reject leave request'
-            ], 500);
-        }
-    }
-
-    public function approveOvertime(ApprovalRequest $request, int $id): JsonResponse
-    {
-        try {
-            $user = $this->user();
-            $overtime = Overtime::with('user')->findOrFail($id);
-
-            DB::transaction(function () use ($overtime, $user) {
-                $overtime->update([
-                    'status' => 'approved',
-                    'approver_id' => $user->id,
-                    'approved_at' => now(),
-                ]);
-
-                if (!empty($overtime->user->glip_url)) {
-                    $this->attendanceService->sendOvertimeApprovalNotification(
-                        $overtime, 'approved', $user, $overtime->user->glip_url
-                    );
-                }
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Overtime request approved successfully'
-            ]);
-
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not authorized to approve this overtime request'
-            ], 403);
-
-        } catch (\Exception $e) {
-            Log::error('Approve overtime error: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'overtime_id' => $id,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to approve overtime request'
-            ], 500);
-        }
-    }
-
-    public function rejectOvertime(ApprovalRequest $request, int $id): JsonResponse
-    {
-        try {
-            $user = $this->user();
-            $overtime = Overtime::with('user')->findOrFail($id);
-
-            DB::transaction(function () use ($overtime, $user, $request) {
-                $overtime->update([
-                    'status' => 'rejected',
-                    'approver_id' => $user->id,
-                    'rejection_note' => $request->rejection_note,
-                    'rejected_at' => now(),
-                ]);
-
-                if (!empty($overtime->user->glip_url)) {
-                    $this->attendanceService->sendOvertimeApprovalNotification(
-                        $overtime, 'rejected', $user, $overtime->user->glip_url, $request->rejection_note
-                    );
-                }
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Overtime request rejected successfully'
-            ]);
-
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not authorized to reject this overtime request'
-            ], 403);
-
-        } catch (\Exception $e) {
-            Log::error('Reject overtime error: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'overtime_id' => $id,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reject overtime request'
             ], 500);
         }
     }
@@ -452,6 +349,85 @@ class DashboardController extends Controller
         }
     }
 
+    public function approveTimesheet(ApprovalRequest $request, int $id): JsonResponse
+    {
+        try {
+            $user = $this->user();
+            $timesheet = Timesheet::with('user')->findOrFail($id);
+
+            if ($denied = $this->guardTimesheet($timesheet, $user)) {
+                return $denied;
+            }
+
+            $timesheet->update([
+                'status' => 'approved',
+                'approver_id' => $user->id,
+                'approved_at' => now(),
+                'rejection_note' => null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Timesheet approved successfully']);
+
+        } catch (\Exception $e) {
+            Log::error('Approve timesheet error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(), 'timesheet_id' => $id,
+            ]);
+
+            return response()->json(['success' => false, 'message' => 'Failed to approve timesheet'], 500);
+        }
+    }
+
+    public function rejectTimesheet(ApprovalRequest $request, int $id): JsonResponse
+    {
+        try {
+            $user = $this->user();
+            $timesheet = Timesheet::with('user')->findOrFail($id);
+
+            if ($denied = $this->guardTimesheet($timesheet, $user)) {
+                return $denied;
+            }
+
+            // Back to the owner as 'rejected', which is editable again.
+            $timesheet->update([
+                'status' => 'rejected',
+                'approver_id' => $user->id,
+                'rejection_note' => $request->rejection_note,
+                'approved_at' => null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Timesheet sent back successfully']);
+
+        } catch (\Exception $e) {
+            Log::error('Reject timesheet error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(), 'timesheet_id' => $id,
+            ]);
+
+            return response()->json(['success' => false, 'message' => 'Failed to reject timesheet'], 500);
+        }
+    }
+
+    /** Only the owner's supervisor may act, and only while it is pending. */
+    private function guardTimesheet(Timesheet $timesheet, ?User $approver): ?JsonResponse
+    {
+        $isSupervisor = $timesheet->user?->immediate_sup_id === $approver?->id;
+
+        if (! $approver || (! $isSupervisor && ! $approver->hasRole('Super Admin'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not the approver for this timesheet',
+            ], 403);
+        }
+
+        if ($timesheet->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => "This timesheet is already {$timesheet->status}",
+            ], 422);
+        }
+
+        return null;
+    }
+
     public function approveAttendanceCorrection(ApprovalRequest $request, int $id): JsonResponse
     {
         try {
@@ -465,17 +441,6 @@ class DashboardController extends Controller
                     'approved_at' => now(),
                 ]);
             });
-
-            $employee = $correction->user;
-            if ($employee && $employee->glip_url) {
-                $ringCentral = app(RingCentralService::class);
-                $ringCentral->sendAttendanceCorrectionApprovalNotification(
-                    $correction,
-                    'approved',
-                    $user,
-                    $employee->glip_url
-                );
-            }
 
             return response()->json([
                 'success' => true,
@@ -516,18 +481,6 @@ class DashboardController extends Controller
                     'rejected_at' => now(),
                 ]);
             });
-
-            $employee = $correction->user;
-            if ($employee && $employee->glip_url) {
-                $ringCentral = app(RingCentralService::class);
-                $ringCentral->sendAttendanceCorrectionApprovalNotification(
-                    $correction,
-                    'rejected',
-                    $user,
-                    $employee->glip_url,
-                    $request->rejection_note
-                );
-            }
 
             return response()->json([
                 'success' => true,

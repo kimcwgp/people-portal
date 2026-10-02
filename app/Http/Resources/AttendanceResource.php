@@ -87,7 +87,9 @@ class AttendanceResource extends JsonResource
     private function getDisplayTimeIn(): ?string
     {
         if ($this->relationLoaded('correction') && $this->correction && $this->correction->status === 'approved') {
-            return $this->correction->corrected_time_in ?? ($this->time_in ? Carbon::parse($this->time_in)->format('g:i A') : null);
+            return $this->correction->corrected_time_in
+                ? Carbon::parse($this->correction->corrected_time_in)->format('g:i A')
+                : ($this->time_in ? Carbon::parse($this->time_in)->format('g:i A') : null);
         }
         
         return $this->time_in ? Carbon::parse($this->time_in)->format('g:i A') : null;
@@ -96,7 +98,9 @@ class AttendanceResource extends JsonResource
     private function getDisplayTimeOut(): ?string
     {
         if ($this->relationLoaded('correction') && $this->correction && $this->correction->status === 'approved') {
-            return $this->correction->corrected_time_out ?? ($this->time_out ? Carbon::parse($this->time_out)->format('g:i A') : null);
+            return $this->correction->corrected_time_out
+                ? Carbon::parse($this->correction->corrected_time_out)->format('g:i A')
+                : ($this->time_out ? Carbon::parse($this->time_out)->format('g:i A') : null);
         }
         
         return $this->time_out ? Carbon::parse($this->time_out)->format('g:i A') : null;
