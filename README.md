@@ -174,35 +174,47 @@ uncomment the two routes in `routes/api.php` and the two guest routes in
 
 ## Seed data
 
-`php artisan db:seed` runs two layers. The baseline — roles and permissions,
-teams, shifts, leave types and the test accounts above — followed by
-`SampleDataSeeder`, which fills every remaining table with demo data for manual
-testing.
+Seeding is split into two layers so you can take the baseline without the demo
+data. Nothing is seeded unless you ask for it.
 
-Sample data on its own, against a database that already has the baseline:
+| Command | Result |
+| --- | --- |
+| `php artisan migrate:fresh` | Schema only. Every table empty. |
+| `php artisan migrate:fresh --seed` | Schema + **baseline**: roles and permissions, teams, shifts, the test accounts, and the reference lists (leave types, project types, time types, holidays). A working, empty app. |
+| `php artisan db:seed --class=SampleDataSeeder` | **Demo data** on top of the baseline. |
 
-```bash
-php artisan db:seed --class=SampleDataSeeder
+The baseline is safe to run anywhere, including production — it contains no
+invented people, clients or filings. The demo layer is for manual testing only.
+
+Running the demo layer against an unseeded database refuses rather than failing
+on a foreign key:
+
+```
+Sample data needs the base seeders first: TeamSeeder, ShiftSeeder, ...
+Run `php artisan db:seed` first to lay down the baseline.
 ```
 
-It adds 13 more accounts (same password) on top of the seven test users, giving
+The demo layer adds 13 more accounts (same password) on top of the seven baseline users, giving
 a 20-person roster across teams, shifts and reporting lines, and then:
 
 | Area | What you get |
 | --- | --- |
 | Employee 201 files | `employees`, `personal_information`, `job_information`, `salary_information` and an `employment_history` trail for all 20 people, including promotions, a part-timer, a contractor, a consultant, an intern and one resignation |
-| Clients and projects | 10 clients, 10 project types, 14 projects with project managers |
+| Clients and projects | 10 clients and 14 projects across 10 project types |
 | Attendance | 4 weeks of weekday records per person, with lunch and short breaks, absences, missed clock-outs, open shifts for whoever is flagged online, and 12 corrections across all three statuses |
 | Leaves | Filings in every status and duration, plus `leave_credits` for this year and last |
-| Overtime, standups, shift changes | Filings in every status, two weeks of standups, and shift change requests including already-applied ones |
+| Standups, shift changes | Two weeks of standups, and shift change requests in every status including already-applied ones |
 | HR | Announcements (active, archived and one soft-deleted), associate logs, and mirrored `for_approvals` rows |
 
 Leaves are created pending and then moved to their final status, so
 `LeaveObserver` computes the credit balances exactly as the app would — used,
 pending and carry-over all reconcile.
 
-Every seeder matches on natural keys, so re-running tops the data up instead of
-duplicating it. To start over completely, use `php artisan migrate:fresh --seed`.
+Every seeder matches on natural keys, so re-running on the same day tops the
+data up instead of duplicating it. Across days it is not idempotent — the
+filings are dated relative to today, so a later run no longer matches and
+creates a second set. To start over, use `php artisan migrate:fresh --seed`
+followed by the sample command, rather than re-running a seeder on its own.
 
 ## Configuration
 

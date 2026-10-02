@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\LeaveType;
+use App\Models\ProjectType;
+use App\Models\TimeType;
 use App\Models\Shift;
 use App\Models\Team;
 use Illuminate\Database\Seeder;
@@ -13,7 +15,7 @@ use Spatie\Permission\Models\Role;
  * records, clients and projects, and several weeks of attendance, leaves,
  * standups and requests in every status.
  *
- * Run on its own with:
+ * Not part of the baseline. Run it explicitly, on top of `php artisan db:seed`:
  *   php artisan db:seed --class=SampleDataSeeder
  *
  * Every child seeder matches on natural keys, so re-running tops the data up
@@ -25,16 +27,13 @@ class SampleDataSeeder extends Seeder
         SampleUserSeeder::class,
         EmployeeProfileSeeder::class,
         ClientSeeder::class,
-        ProjectTypeSeeder::class,
         ProjectSeeder::class,
         LeaveCreditSeeder::class,
         LeaveSeeder::class,
         AttendanceSeeder::class,
         StandupSeeder::class,
         ShiftChangeRequestSeeder::class,
-        TimeTypeSeeder::class,
         TimesheetSeeder::class,
-        HolidaySeeder::class,
         HrAnnouncementSeeder::class,
         AssociateLogSeeder::class,
         ForApprovalSeeder::class,
@@ -76,12 +75,20 @@ class SampleDataSeeder extends Seeder
             $missing[] = 'LeaveTypeSeeder';
         }
 
+        if (ProjectType::count() === 0) {
+            $missing[] = 'ProjectTypeSeeder';
+        }
+
+        if (TimeType::count() === 0) {
+            $missing[] = 'TimeTypeSeeder';
+        }
+
         if ($missing === []) {
             return true;
         }
 
         $this->command->error('Sample data needs the base seeders first: ' . implode(', ', $missing));
-        $this->command->line('Run `php artisan db:seed` to seed everything in order.');
+        $this->command->line('Run `php artisan db:seed` first to lay down the baseline.');
 
         return false;
     }
