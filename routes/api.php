@@ -9,24 +9,24 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\MyLeavesController;
 use App\Http\Controllers\MyAttendanceController;
 use App\Http\Controllers\MyStandupController;
-use App\Http\Controllers\MyOvertimeController;
 use App\Http\Controllers\MyShiftController;
 use App\Http\Controllers\ShiftChangeRequestController;
 use App\Http\Controllers\AssociateLogController;
 use App\Http\Controllers\ActiveAssociatesController;
 use App\Http\Controllers\HrAnnouncementController;
 use App\Http\Controllers\TeamLeavesController;
-use App\Http\Controllers\TeamOvertimeController;
 use App\Http\Controllers\TeamStandupController;
+use App\Http\Controllers\TeamTimeEntryController;
 use App\Http\Controllers\TeamAttendanceController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProxyLeavesController;
-use App\Http\Controllers\ProxyOvertimeController;
 use App\Http\Controllers\ProxyAttendanceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\LeaveCreditsController;
 use App\Http\Controllers\EmployeeManagementController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\TimeEntryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -109,35 +109,6 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('destroy');
         });
 
-        Route::prefix('proxy-overtime')->name('proxy-overtime.')->group(function () {
-            Route::get('/cutoff-periods', [ProxyOvertimeController::class, 'getCutoffPeriods'])
-                ->middleware('permission:view proxy overtime')
-                ->name('cutoff-periods');
-            Route::get('/form-data', [ProxyOvertimeController::class, 'getFormData'])
-                ->middleware('permission:view proxy overtime')
-                ->name('form-data');
-            Route::get('/export', [ProxyOvertimeController::class, 'export'])
-                ->middleware('permission:view proxy overtime')
-                ->name('export');
-            Route::get('/stats', [ProxyOvertimeController::class, 'getStats'])
-                ->middleware('permission:view proxy overtime')
-                ->name('stats');
-            Route::get('/', [ProxyOvertimeController::class, 'index'])
-                ->middleware('permission:view proxy overtime')
-                ->name('index');
-            Route::post('/', [ProxyOvertimeController::class, 'store'])
-                ->middleware('permission:create proxy overtime')
-                ->name('store');
-            Route::get('/{overtime}', [ProxyOvertimeController::class, 'show'])
-                ->middleware('permission:view proxy overtime')
-                ->name('show');
-            Route::put('/{overtime}', [ProxyOvertimeController::class, 'update'])
-                ->middleware('permission:edit proxy overtime')
-                ->name('update');
-            Route::delete('/{overtime}', [ProxyOvertimeController::class, 'destroy'])
-                ->middleware('permission:delete proxy overtime')
-                ->name('destroy');
-        });
 
         Route::prefix('proxy-attendance')->name('proxy-attendance.')->group(function () {
             Route::get('/cutoff-periods', [ProxyAttendanceController::class, 'getCutoffPeriods'])
@@ -240,18 +211,19 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/leaves/{leave}/reject', [DashboardController::class, 'rejectLeave'])
                 ->middleware('permission:view dashboard')
                 ->name('leaves.reject');
-            Route::post('/overtime/{overtime}/approve', [DashboardController::class, 'approveOvertime'])
-                ->middleware('permission:view dashboard')
-                ->name('overtime.approve');
-            Route::post('/overtime/{overtime}/reject', [DashboardController::class, 'rejectOvertime'])
-                ->middleware('permission:view dashboard')
-                ->name('overtime.reject');
             Route::post('/shift-change/{shiftChangeRequest}/approve', [DashboardController::class, 'approveShiftChange'])
                 ->middleware('permission:view dashboard')
                 ->name('shift-change.approve');
             Route::post('/shift-change/{shiftChangeRequest}/reject', [DashboardController::class, 'rejectShiftChange'])
                 ->middleware('permission:view dashboard')
                 ->name('shift-change.reject');
+
+            Route::post('/timesheets/{timesheet}/approve', [DashboardController::class, 'approveTimesheet'])
+                ->middleware('permission:view dashboard')
+                ->name('timesheets.approve');
+            Route::post('/timesheets/{timesheet}/reject', [DashboardController::class, 'rejectTimesheet'])
+                ->middleware('permission:view dashboard')
+                ->name('timesheets.reject');
         });
 
         // My Attendance routes
@@ -321,36 +293,6 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->middleware('permission:delete my standups');
         });
 
-        // My Overtime routes
-        Route::prefix('my-overtime')->name('my-overtime.')->group(function () {
-            Route::get('/projects', [MyOvertimeController::class, 'getProjects'])
-                ->middleware('permission:view my overtime')
-                ->name('projects');
-            Route::get('/approvers', [MyOvertimeController::class, 'getApprovers'])
-                ->middleware('permission:view my overtime')
-                ->name('approvers');
-            Route::get('/supervisor-info', [MyOvertimeController::class, 'getSupervisorInfo'])
-                ->middleware('permission:view my overtime')
-                ->name('supervisor-info');
-            Route::get('/statistics', [MyOvertimeController::class, 'statistics'])
-                ->middleware('permission:view my overtime')
-                ->name('statistics');
-            Route::get('/project-managers', [MyOvertimeController::class, 'getProjectManagers'])
-                ->middleware('permission:view my overtime')
-                ->name('project-managers');
-            Route::put('/{overtime}/cancel', [MyOvertimeController::class, 'cancel'])
-                ->middleware('permission:cancel my overtime');
-            Route::get('/stats', [MyOvertimeController::class, 'getStats'])
-                ->middleware('permission:view my overtime');
-
-            // Granular permissions per action
-            Route::get('/', [MyOvertimeController::class, 'index'])
-                ->middleware('permission:view my overtime');
-            Route::post('/', [MyOvertimeController::class, 'store'])
-                ->middleware('permission:create my overtime');
-            Route::get('/{overtime}', [MyOvertimeController::class, 'show'])
-                ->middleware('permission:view my overtime');
-        });
 
         // My Shift routes
         Route::prefix('my-shift')->name('my-shift.')->group(function () {
@@ -411,14 +353,16 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->name('download-attachment');
         });
 
-        // My Team Overtime
-        Route::prefix('my-team-overtime')->name('my-team-overtime.')->group(function () {
-            Route::get('overtime', [TeamOvertimeController::class, 'index'])
-                ->middleware('permission:view team overtime');
-            Route::get('stats', [TeamOvertimeController::class, 'getStats'])
-                ->middleware('permission:view team overtime');
-            Route::get('export', [TeamOvertimeController::class, 'export'])
-                ->middleware('permission:export team overtime');
+
+        // Team's Time Entries -- a supervisor's read-only view of their
+        // direct reports' weekly timesheets.
+        Route::prefix('my-team-time-entries')->name('my-team-time-entries.')->group(function () {
+            Route::get('/', [TeamTimeEntryController::class, 'index'])
+                ->middleware('permission:view team time entries');
+            Route::get('/export', [TeamTimeEntryController::class, 'export'])
+                ->middleware('permission:export team time entries');
+            Route::get('/{user}/week', [TeamTimeEntryController::class, 'week'])
+                ->middleware('permission:view team time entries');
         });
 
         // My Team Standup
@@ -433,6 +377,48 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/active-associates', [ActiveAssociatesController::class, 'index'])
             ->middleware('permission:view active associates')
             ->name('active-associates');
+
+        // Time Entries -- weekly timesheets (NetSuite-style grid).
+        Route::prefix('time-entries')->name('time-entries.')->group(function () {
+            Route::get('/time-types', [TimeEntryController::class, 'timeTypes'])
+                ->middleware('permission:view my time entries')->name('time-types');
+            Route::get('/projects', [TimeEntryController::class, 'projects'])
+                ->middleware('permission:view my time entries')->name('projects');
+            Route::get('/week', [TimeEntryController::class, 'week'])
+                ->middleware('permission:view my time entries')->name('week');
+            Route::get('/', [TimeEntryController::class, 'index'])
+                ->middleware('permission:view my time entries')->name('index');
+
+            Route::post('/{timesheet}/entries', [TimeEntryController::class, 'storeEntry'])
+                ->middleware('permission:create my time entries')->name('entries.store');
+            Route::put('/{timesheet}/entries/{entry}', [TimeEntryController::class, 'updateEntry'])
+                ->middleware('permission:edit my time entries')->name('entries.update');
+            Route::delete('/{timesheet}/entries/{entry}', [TimeEntryController::class, 'destroyEntry'])
+                ->middleware('permission:delete my time entries')->name('entries.destroy');
+            Route::post('/{timesheet}/submit', [TimeEntryController::class, 'submit'])
+                ->middleware('permission:submit my time entries')->name('submit');
+        });
+
+        // Holidays -- the dashboard panel plus the HR maintenance screen.
+        Route::prefix('holidays')->name('holidays.')->group(function () {
+            Route::get('/month', [HolidayController::class, 'forMonth'])
+                ->middleware('permission:view holidays')
+                ->name('month');
+            Route::get('/', [HolidayController::class, 'index'])
+                ->middleware('permission:view holidays')
+                ->name('index');
+            Route::post('/', [HolidayController::class, 'store'])
+                ->middleware('permission:create holidays')
+                ->name('store');
+            Route::put('/{holiday}', [HolidayController::class, 'update'])
+                ->middleware('permission:edit holidays')
+                ->name('update');
+            Route::patch('/{holiday}', [HolidayController::class, 'update'])
+                ->middleware('permission:edit holidays');
+            Route::delete('/{holiday}', [HolidayController::class, 'destroy'])
+                ->middleware('permission:delete holidays')
+                ->name('destroy');
+        });
 
         // Leave Types routes
         Route::get('leave-types', [LeaveTypeController::class, 'index'])

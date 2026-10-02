@@ -18,25 +18,23 @@ const Clients          = () => import('@/components/Clients.vue')
 // My Records Components
 const MyLeaves         = () => import('@/components/MyLeaves.vue')
 const MyAttendance     = () => import('@/components/MyAttendance.vue')
-const MyStandup        = () => import('@/components/MyStandup.vue')
-const MyOvertime       = () => import('@/components/MyOvertime.vue')
+const TimeEntries    = () => import('@/components/TimeEntries.vue')
 const MyShift          = () => import('@/components/MyShift.vue') 
 
 // Team Components
 const TeamAttendance   = () => import('@/components/TeamAttendance.vue')
-const TeamStandup      = () => import('@/components/TeamStandup.vue')
+const TeamTimeEntries  = () => import('@/components/TeamComponents/TeamTimeEntries.vue')
 const TeamLeaves       = () => import('@/components/TeamComponents/TeamLeaves.vue')
-const TeamOvertime     = () => import('@/components/TeamComponents/TeamOvertime.vue')
 const TeamShift        = () => import('@/components/TeamComponents/TeamShift.vue')
 
 // HR
 const HrAnnouncements = () => import('@/components/HrSettings/HrAnnouncements.vue')
 const HRAssociateLogs  = () => import('@/components/HrSettings/HRAssociateLogs.vue')
 const ProxyLeaves     = () => import('@/components/HrSettings/ProxyLeaves.vue')
-const ProxyOvertime   = () => import('@/components/HrSettings/ProxyOvertime.vue')
 const ProxyAttendance = () => import('@/components/HrSettings/ProxyAttendance.vue')
 const LeaveCredits    = () => import('@/components/HrSettings/LeaveCredits.vue')
 const EmployeeRegularization = () => import('@/components/HrSettings/EmployeeRegularization.vue')
+const Holidays        = () => import('@/components/HrSettings/Holidays.vue')
 
 
 const routes = [
@@ -50,7 +48,7 @@ const routes = [
       { path: 'dashboard', name: 'dashboard', component: Dashboard, meta: { title: 'Dashboard', permission: 'view dashboard' } },
       { path: 'users', name: 'users', component: UserManagement, meta: { title: 'User Management', permission: 'view users' } },
       { path: 'roles', name: 'roles', component: RoleManagement, meta: { title: 'Role Management', permission: 'view roles' } },
-      { path: 'shifts', name: 'shifts', component: ShiftManagement, meta: { title: 'Shift Management', permission: 'view shifts' } },
+      { path: 'shifts', name: 'shifts', component: ShiftManagement, meta: { title: 'Shifts', permission: 'view shifts' } },
       { path: 'associate-logs', name: 'associate-logs', component: HRAssociateLogs, meta: { title: 'Associate Logs', permission: 'view associate logs' } },
       { path: 'active-associates', name: 'active-associates', component: ActiveAssociates, meta: { title: 'Active Associates', permission: 'view active associates' } },
 
@@ -60,25 +58,23 @@ const routes = [
       { path: 'clients', name: 'clients', component: Clients, meta: { title: 'Clients', permission: 'view clients' } },
 
       // My Records routes
-      { path: 'attendance', name: 'attendance', component: MyAttendance, meta: { title: 'My Attendance', permission: 'view my attendance' } },
-      { path: 'standup', name: 'standup', component: MyStandup, meta: { title: 'My Stand up', permission: 'view my standups' } },
-      { path: 'leaves', name: 'leaves', component: MyLeaves, meta: { title: 'My Leaves', permission: 'view my leaves' } },
-      { path: 'overtime', name: 'overtime', component: MyOvertime, meta: { title: 'My Overtime', permission: 'view my overtime' } },
+      { path: 'attendance', name: 'attendance', component: MyAttendance, meta: { title: 'Attendance', permission: 'view my attendance' } },
+      { path: 'time-entries', name: 'time-entries', component: TimeEntries, meta: { title: 'Time Entries', permission: 'view my time entries' } },
+      { path: 'leaves', name: 'leaves', component: MyLeaves, meta: { title: 'Leave Requests', permission: 'view my leaves' } },
       { path: 'shift', name: 'shift', component: MyShift, meta: { title: 'My Shift', permission: 'view my shift' } },
 
       // Team routes
-      { path: 'team-attendance', name: 'team-attendance', component: TeamAttendance, meta: { title: 'My Team\'s Attendance', permission: 'view team attendance' } },
-      { path: 'team-standup', name: 'team-standup', component: TeamStandup, meta: { title: 'My Team\'s Stand Up', permission: 'view team standups' } },
-      { path: 'team-leaves', name: 'team-leaves', component: TeamLeaves, meta: { title: 'My Team\'s Leaves', permission: 'view team leaves' } },
-      { path: 'team-overtime', name: 'team-overtime', component: TeamOvertime, meta: { title: 'My Team\'s Overtime', permission: 'view team overtime' } },
-      { path: 'team-shift', name: 'team-shift', component: TeamShift, meta: { title: 'My Team\'s Shift', permission: 'view team shift' } },
+      { path: 'team-attendance', name: 'team-attendance', component: TeamAttendance, meta: { title: 'Team\'s Attendance', permission: 'view team attendance' } },
+      { path: 'team-time-entries', name: 'team-time-entries', component: TeamTimeEntries, meta: { title: 'Team\'s Time Entries', permission: 'view team time entries' } },
+      { path: 'team-leaves', name: 'team-leaves', component: TeamLeaves, meta: { title: 'Team\'s Leaves', permission: 'view team leaves' } },
+      { path: 'team-shift', name: 'team-shift', component: TeamShift, meta: { title: 'Team\'s Shift', permission: 'view team shift' } },
 
       // HR Settings routes
       { path: 'hr-announcements', name: 'hr-announcements', component: HrAnnouncements, meta: { title: 'HR Announcements', permission: 'view hr announcements' } },
       { path: 'leave-credits', name: 'leave-credits', component: LeaveCredits, meta: { title: 'Leave Credits', permission: 'view leave credits' } },
       { path: 'employee-regularization', name: 'employee-regularization', component: EmployeeRegularization, meta: { title: 'Employee Regularization', permission: 'edit employee regularization' } },
+      { path: 'holidays', name: 'holidays', component: Holidays, meta: { title: 'Holidays', permission: 'create holidays' } },
       { path: 'proxy-leaves', name: 'proxy-leaves', component: ProxyLeaves, meta: { title: 'Proxy Leaves', permission: 'view proxy leaves' } },
-      { path: 'proxy-overtime', name: 'proxy-overtime', component: ProxyOvertime, meta: { title: 'Proxy Overtime', permission: 'view proxy overtime' } },
       { path: 'proxy-attendance', name: 'proxy-attendance', component: ProxyAttendance, meta: { title: 'Proxy Attendance', permission: 'view proxy attendance' } },
       // add more children here...
     ],
