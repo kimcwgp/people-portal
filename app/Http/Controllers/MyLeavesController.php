@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Leave;
+use App\Models\LeaveCredit;
 use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -39,10 +40,10 @@ class MyLeavesController extends Controller
                 $q->where('leaves_type_id', $typeId)
             )
             ->when($request->start_date, fn($q, $startDate) => 
-                $q->whereDate('start_date', '>=', $startDate)
+                $q->whereDate('end_date', '>=', $startDate)
             )
             ->when($request->end_date, fn($q, $endDate) => 
-                $q->whereDate('end_date', '<=', $endDate)
+                $q->whereDate('start_date', '<=', $endDate)
             )
             ->latest()
             ->paginate($perPage);
@@ -229,23 +230,9 @@ class MyLeavesController extends Controller
 
         $leave->delete();
 
-        $user = Auth::user();
-        if ($user->immediate_sup_id) {
-            $supervisor = \App\Models\User::find($user->immediate_sup_id);
-            if ($supervisor && $supervisor->glip_url) {
-                $ringCentral = app(\App\Services\RingCentralService::class);
-                $ringCentral->sendLeaveCancellationNotification(
-                    $leave, 
-                    $user, 
-                    $supervisor->glip_url, 
-                    $request->cancellation_reason
-                );
-            }
-        }
-
         return response()->json([
             'success' => true,
-            'message' => 'Leave request has been cancelled successfully. Your supervisor has been notified.',
+            'message' => 'Leave request has been cancelled successfully.',
         ]);
     }
 
@@ -257,11 +244,11 @@ class MyLeavesController extends Controller
         
         // Apply date filters if provided
         if ($request->start_date) {
-            $baseQuery = $baseQuery->whereDate('start_date', '>=', $request->start_date);
+            $baseQuery = $baseQuery->whereDate('end_date', '>=', $request->start_date);
         }
         
         if ($request->end_date) {
-            $baseQuery = $baseQuery->whereDate('end_date', '<=', $request->end_date);
+            $baseQuery = $baseQuery->whereDate('start_date', '<=', $request->end_date);
         }
 
         // Apply leave type filter if provided
@@ -276,18 +263,40 @@ class MyLeavesController extends Controller
             'cancelled' => Leave::onlyTrashed()
                 ->where('user_id', $userId)
                 ->where('status', 'cancelled')
-                ->when($request->start_date, fn($q) => $q->whereDate('start_date', '>=', $request->start_date))
-                ->when($request->end_date, fn($q) => $q->whereDate('end_date', '<=', $request->end_date))
+                ->when($request->start_date, fn($q) => $q->whereDate('end_date', '>=', $request->start_date))
+                ->when($request->end_date, fn($q) => $q->whereDate('start_date', '<=', $request->end_date))
                 ->when($request->leave_type_id, fn($q) => $q->where('leaves_type_id', $request->leave_type_id))
                 ->count(),
             'total'    => Leave::withTrashed()
                 ->where('user_id', $userId)
-                ->when($request->start_date, fn($q) => $q->whereDate('start_date', '>=', $request->start_date))
-                ->when($request->end_date, fn($q) => $q->whereDate('end_date', '<=', $request->end_date))
+                ->when($request->start_date, fn($q) => $q->whereDate('end_date', '>=', $request->start_date))
+                ->when($request->end_date, fn($q) => $q->whereDate('start_date', '<=', $request->end_date))
                 ->when($request->leave_type_id, fn($q) => $q->where('leaves_type_id', $request->leave_type_id))
                 ->count(),
         ];
 
+        // Remaining credits are a year-to-date figure, so they deliberately
+        // ignore the filters above -- the tiles must not move when you filter.
+        $stats['credits'] = $this->getLeaveCredits($userId);
+
         return response()->json(['success' => true, 'data' => $stats]);
+    }
+
+    /**
+     * The signed-in user's own remaining leave credits for the current year.
+     */
+    private function getLeaveCredits(int $userId): array
+    {
+        $credit = LeaveCredit::where('user_id', $userId)
+            ->where('year', now()->year)
+            ->first();
+
+        return [
+            'pto' => $credit ? max(0, (float) $credit->pto_remaining) : 0,
+            'vl'  => $credit ? max(0, (float) $credit->vl_remaining) : 0,
+            'sl'  => $credit ? max(0, (float) $credit->sl_remaining) : 0,
+            'bdo' => $credit ? max(0, (int) floor((float) $credit->birthday_leave_available)) : 0,
+            'cto' => $credit ? max(0, (float) $credit->cto_remaining_hours) : 0,
+        ];
     }
 }

@@ -20,6 +20,7 @@ class LeaveCreditSeeder extends Seeder
 {
     private const ANNUAL_VL = 15.00;
     private const ANNUAL_SL = 15.00;
+    private const ANNUAL_PTO = 10.00;
 
     public function run(): void
     {
@@ -57,11 +58,18 @@ class LeaveCreditSeeder extends Seeder
             // Birthday leave needs a full year of tenure.
             $birthdayLeave = $hireDate && $hireDate->copy()->addYear()->lessThanOrEqualTo(Carbon::today()) ? 1.00 : 0.00;
 
+            // PTO mirrors the VL rule. CTO is compensatory time off granted by
+            // HR, so it is seeded deterministically rather than derived.
+            $ptoGrant = $isRegular ? self::ANNUAL_PTO : round(min($monthsThisYear, 12) * 0.35, 2);
+            $ctoHours = $isRegular ? round(($user->id % 5) * 2.5, 2) : 0.00;
+
             $this->grant($user, $currentYear, [
                 'vl_credits' => $vlGrant,
                 'sl_credits' => $slGrant,
                 'vl_carried_over' => $carriedOver,
                 'birthday_leave_count' => $birthdayLeave,
+                'pto_credits' => $ptoGrant,
+                'cto_hours' => $ctoHours,
             ]);
             $seeded++;
 
@@ -82,6 +90,12 @@ class LeaveCreditSeeder extends Seeder
                         'sl_used' => $slUsed,
                         'sl_pending' => 0,
                         'birthday_leave_count' => 0,
+                        'pto_credits' => self::ANNUAL_PTO,
+                        'pto_used' => min(self::ANNUAL_PTO, 4.00 + ($user->id % 3)),
+                        'pto_pending' => 0,
+                        'cto_hours' => 0,
+                        'cto_used_hours' => 0,
+                        'cto_pending_hours' => 0,
                     ]
                 );
                 $seeded++;

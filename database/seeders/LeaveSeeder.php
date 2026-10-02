@@ -7,6 +7,7 @@ use App\Models\LeaveType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Seeds leave filings across every status, duration and leave type.
@@ -78,8 +79,13 @@ class LeaveSeeder extends Seeder
         ['teamlead@peopleportal.test',       self::SL_NO_MC,    '-2 days',   '-2 days',   'Half Day (1pm to 5pm)',   'Bad headache, logged off after lunch.',               'pending'],
     ];
 
+    /** The path every medical-certificate leave points at. */
+    private const MC_PATH = 'leaves/sample-medical-certificate.pdf';
+
     public function run(): void
     {
+        $this->ensureSampleCertificate();
+
         $types = LeaveType::all()->keyBy('name');
         $hr = User::where('email', 'hr@peopleportal.test')->first();
         $today = Carbon::today();
@@ -120,7 +126,7 @@ class LeaveSeeder extends Seeder
                 'time_out' => $duration === 'Custom' ? '12:30:00' : null,
                 'reason' => $reason,
                 'notes' => $duration === 'Custom' ? 'Will make up the hours in the afternoon.' : null,
-                'attachment' => $typeName === self::SL_MC ? 'leaves/sample-medical-certificate.pdf' : null,
+                'attachment' => $typeName === self::SL_MC ? self::MC_PATH : null,
                 'status' => 'pending',
                 'approver_id' => $approver?->id,
             ]);
@@ -138,6 +144,45 @@ class LeaveSeeder extends Seeder
         }
 
         $this->command->info("{$created} leaves seeded across pending, approved, rejected and cancelled.");
+    }
+
+    /**
+     * The seeded leaves reference a certificate file; without it the preview
+     * iframe falls through to the SPA catch-all and shows the app itself.
+     */
+    private function ensureSampleCertificate(): void
+    {
+        if (Storage::disk('public')->exists(self::MC_PATH)) {
+            return;
+        }
+
+        // A minimal one-page PDF, enough for the preview to render.
+        $body = "BT /F1 16 Tf 60 700 Td (Sample Medical Certificate) Tj ET\n"
+            . "BT /F1 11 Tf 60 670 Td (Seeded placeholder - People Portal) Tj ET";
+        $objects = [
+            "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
+            "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
+            "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]"
+                . "/Resources<</Font<</F1 5 0 R>>>>/Contents 4 0 R>>endobj",
+            "4 0 obj<</Length " . strlen($body) . ">>stream\n{$body}\nendstream endobj",
+            "5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj",
+        ];
+
+        $pdf = "%PDF-1.4\n";
+        $offsets = [];
+        foreach ($objects as $object) {
+            $offsets[] = strlen($pdf);
+            $pdf .= $object . "\n";
+        }
+
+        $xref = strlen($pdf);
+        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n0000000000 65535 f \n";
+        foreach ($offsets as $offset) {
+            $pdf .= sprintf("%010d 00000 n \n", $offset);
+        }
+        $pdf .= "trailer<</Size " . (count($objects) + 1) . "/Root 1 0 R>>\nstartxref\n{$xref}\n%%EOF";
+
+        Storage::disk('public')->put(self::MC_PATH, $pdf);
     }
 
     private function transitionAttributes(string $status, User $user, ?User $approver, Carbon $startDate): array

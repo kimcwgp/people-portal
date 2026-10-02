@@ -1,175 +1,175 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-4">
+  <div class="min-h-screen bg-canvas p-4">
     <div class="mx-auto max-w-full px-2 sm:px-4 lg:px-6 xl:px-8">
-      <div class="mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 class="text-3xl font-bold text-gray-900">My Leaves</h1>
-          <button
-            @click="openLeaveModal()"
-            class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            File New Leave
-          </button>
+      <!-- Title bar, matching Attendance -->
+      <div class="mb-3 sm:mb-4 flex items-center justify-between gap-4 rounded-xl bg-surface px-4 py-3 shadow-sm sm:rounded-2xl sm:px-6">
+        <h1 class="text-xl font-bold text-text sm:text-2xl">Leave Requests</h1>
+        <button
+          @click="openLeaveModal()"
+          class="flex flex-shrink-0 items-center gap-2 rounded-lg bg-accent-solid px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          File Leave
+        </button>
+      </div>
+
+      <!-- Remaining credits for the year. These ignore the filters below. -->
+      <div class="mb-3 sm:mb-4 rounded-xl bg-surface p-4 shadow-sm sm:rounded-2xl sm:px-6">
+        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Available Leave Credits</h2>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div v-for="credit in leaveCreditTiles" :key="credit.label" class="rounded-lg border border-border px-3 py-2.5">
+            <p class="text-xs text-text-muted">{{ credit.label }}</p>
+            <p class="text-base sm:text-lg font-bold text-text">
+              {{ credit.value }}<span class="ml-0.5 text-xs font-medium text-text-muted">{{ credit.unit }}</span>
+            </p>
+          </div>
         </div>
       </div>
-      
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          <div class="lg:col-span-2">
-            <div class="flex space-x-1">
-              <button
-                v-for="status in statusFilters"
-                :key="status.value"
-                @click="currentStatus = status.value"
-                :class="[
-                  'px-3 py-2 text-xs font-medium rounded-lg transition-colors flex-1 sm:flex-none',
-                  currentStatus === status.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border'
-                ]"
-              >
-                {{ status.label }}
-                <span v-if="status.count > 0" class="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                  {{ status.count }}
-                </span>
-              </button>
-            </div>
-          </div>
 
-          <div>
-            <select
-              v-model="filters.leaveTypeId"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Leave Types</option>
-              <option v-for="type in leaveTypes" :key="type.id" :value="type.id">
-                {{ type.name }}
+      <!-- Filters + results live in one card, as in Attendance -->
+      <div class="bg-surface rounded-lg shadow-sm border border-border overflow-hidden">
+        <!-- Notched-outline fields: the label sits on the border line.
+             shrink-0 keeps the set widths so they wrap instead of collapsing. -->
+        <div class="flex flex-wrap items-center gap-3 border-b border-border p-4">
+          <div class="relative w-full shrink-0 sm:w-52">
+            <label for="f-status" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Status</label>
+            <select id="f-status" v-model="filters.status"
+                    class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none">
+              <option v-for="status in statusFilters" :key="status.value" :value="status.value">
+                {{ status.label }} ({{ status.count }})
               </option>
             </select>
           </div>
 
-          <div>
-            <input
-              v-model="filters.startDate"
-              type="date"
-              placeholder="Start Date"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-          </div>
-          
-          <div>
-            <input
-              v-model="filters.endDate"
-              type="date"
-              placeholder="End Date"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+          <div class="relative w-full shrink-0 sm:w-56">
+            <label for="f-leave-type" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Leave Request</label>
+            <select id="f-leave-type" v-model="filters.leaveTypeId"
+                    class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none">
+              <option value="">All Leave Types</option>
+              <option v-for="type in leaveTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
+            </select>
           </div>
 
-          <div class="flex space-x-2">
-            <button
-              @click="applyFilters"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex-1 sm:flex-none"
-            >
+          <div class="relative w-full shrink-0 sm:w-72">
+            <label for="f-date" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Date</label>
+            <div id="f-date" class="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 focus-within:border-accent">
+              <input type="date" v-model="filters.startDate"
+                     class="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none">
+              <span class="text-text-subtle">&ndash;</span>
+              <input type="date" v-model="filters.endDate"
+                     class="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none">
+            </div>
+          </div>
+
+          <div class="flex shrink-0 gap-2">
+            <button @click="applyFilters"
+                    class="flex-1 rounded-lg bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover sm:flex-none">
               Filter
             </button>
-            <button
-              @click="clearFilters"
-              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex-1 sm:flex-none"
-            >
+            <button @click="clearFilters"
+                    class="flex-1 rounded-lg border border-border bg-surface-sunken px-5 py-2.5 text-sm font-medium text-text transition-colors hover:bg-canvas sm:flex-none">
               Clear
             </button>
           </div>
         </div>
-      </div>
 
-      <div v-if="!loading && leaves.length > 0" class="mb-4">
-        <p class="text-sm text-gray-600">
-          Showing {{ (currentPage - 1) * perPage + 1 }} to {{ Math.min(currentPage * perPage, totalItems) }} of {{ totalItems }} leave requests
-        </p>
-      </div>
+        <!-- Results summary -->
+        <div v-if="!loading && leaves.length > 0" class="border-b border-border px-4 py-2">
+          <p class="text-xs text-text-muted">
+            Showing {{ (currentPage - 1) * perPage + 1 }} to {{ Math.min(currentPage * perPage, totalItems) }} of {{ totalItems }} leave requests
+          </p>
+        </div>
 
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+        <!-- Loading -->
+        <div v-if="loading" class="flex justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        </div>
 
-      <div v-else-if="leaves.length === 0" class="rounded-lg bg-white p-8 shadow-sm text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"/>
-        </svg>
-        <h3 class="mt-3 text-lg font-semibold text-gray-900">No leave requests found</h3>
-        <p class="mt-1 text-gray-600">
-          {{ hasActiveFilters ? 'Try adjusting your filters' : 'You haven\'t submitted any leave requests yet.' }}
-        </p>
-      </div>
+        <!-- Empty -->
+        <div v-else-if="leaves.length === 0" class="p-8 text-center">
+          <svg class="mx-auto h-12 w-12 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"/>
+          </svg>
+          <h3 class="mt-3 text-lg font-semibold text-text">No leave requests found</h3>
+          <p class="mt-1 text-text-muted">
+            {{ hasActiveFilters ? 'Try adjusting your filters' : 'You haven\'t submitted any leave requests yet.' }}
+          </p>
+        </div>
 
       <!-- Leaves Table -->
-      <div v-else class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div v-else>
         <!-- Desktop Table -->
         <div class="hidden lg:block overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
+          <!-- Ten columns need real width; without a floor the dates squeeze
+               onto three lines instead of the wrapper scrolling. -->
+          <table class="w-full min-w-[1200px]">
+            <thead class="bg-surface-sunken border-b border-border">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Leave Type</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Start Date</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">End Date</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Notes</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Attachment</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Submitted</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Leave Type</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Start Date</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">End Date</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Duration</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Reason</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Notes</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Attachment</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Submitted</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Action</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-border">
               <tr 
                 v-for="leave in leaves" 
                 :key="leave.id"
-                class="hover:bg-gray-50 transition-colors"
+                class="hover:bg-surface-sunken transition-colors"
               >
                 <td class="px-4 py-3">
-                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700">
+                  <span class="inline-flex items-center whitespace-nowrap px-2 py-1 rounded-md text-xs font-medium bg-status-purple text-status-text">
                     {{ leave.leave_type?.name }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
-                  <p class="text-sm text-gray-900">{{ formatDate(leave.start_date) }}</p>
-                  <p v-if="leave.time_in" class="text-xs text-gray-500">{{ formatTime(leave.time_in) }}</p>
+                  <p class="whitespace-nowrap text-sm text-text">{{ formatDate(leave.start_date) }}</p>
+                  <p v-if="leave.time_in" class="text-xs text-text-muted">{{ formatTime(leave.time_in) }}</p>
                 </td>
                 <td class="px-4 py-3">
-                  <p class="text-sm text-gray-900">{{ formatDate(leave.end_date) }}</p>
-                  <p v-if="leave.time_out" class="text-xs text-gray-500">{{ formatTime(leave.time_out) }}</p>
+                  <p class="whitespace-nowrap text-sm text-text">{{ formatDate(leave.end_date) }}</p>
+                  <p v-if="leave.time_out" class="text-xs text-text-muted">{{ formatTime(leave.time_out) }}</p>
                 </td>
                 <td class="px-4 py-3">
-                  <p class="text-sm font-medium text-gray-900">
+                  <p class="text-sm font-medium text-text">
                     {{ leave.formatted_duration || (leave.calculated_days + ' day' + (leave.calculated_days >= 2 ? 's' : '')) }}
                   </p>
-                  <p class="text-xs text-gray-500">{{ leave.duration || 'All Day' }}</p>
+                  <p class="text-xs text-text-muted">{{ leave.duration || 'All Day' }}</p>
                 </td>
                 <td class="px-4 py-3 max-w-xs">
-                  <p class="text-sm text-gray-900 line-clamp-2">{{ leave.reason || 'No reason provided' }}</p>
+                  <p class="text-sm text-text line-clamp-2" @mouseenter="showTip($event, leave.reason)" @mouseleave="hideTip">{{ leave.reason || 'No reason provided' }}</p>
                 </td>
                 <td class="px-4 py-3 max-w-xs">
-                  <p v-if="leave.rejection_note" class="text-sm text-red-600 line-clamp-2">
+                  <p v-if="leave.rejection_note" class="text-sm text-danger line-clamp-2"
+                     @mouseenter="showTip($event, leave.rejection_note)" @mouseleave="hideTip">
                     <span class="font-semibold">{{ leave.status === 'cancelled' ? 'Cancelled: ' : 'Rejected: ' }}</span>{{ leave.rejection_note }}
                   </p>
-                  <p v-else-if="leave.notes" class="text-sm text-gray-600 line-clamp-2">{{ leave.notes }}</p>
-                  <span v-else class="text-sm text-gray-400">-</span>
+                  <p v-else-if="leave.notes" class="text-sm text-text-muted line-clamp-2"
+                     @mouseenter="showTip($event, leave.notes)" @mouseleave="hideTip">{{ leave.notes }}</p>
+                  <span v-else class="text-sm text-text-muted">-</span>
                 </td>
                 <td class="px-4 py-3">
                   <button
                     v-if="leave.attachment"
                     @click="openAttachmentModal(leave.attachment)"
-                    class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    class="text-sm text-accent-solid hover:text-accent-hover flex items-center gap-1"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                     </svg>
                     <span>View</span>
                   </button>
-                  <span v-else class="text-sm text-gray-400">-</span>
+                  <span v-else class="text-sm text-text-muted">-</span>
+                </td>
+                <td class="px-4 py-3">
+                  <p class="whitespace-nowrap text-sm text-text">{{ formatDate(leave.created_at) }}</p>
+                  <p class="text-xs text-text-muted">{{ formatTime(leave.created_at?.split(' ')[1]) }}</p>
                 </td>
                 <td class="px-4 py-3">
                   <span :class="getStatusClass(leave.status)" class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap">
@@ -177,15 +177,11 @@
                   </span>
                 </td>
                 <td class="px-4 py-3">
-                  <p class="text-sm text-gray-900">{{ formatDate(leave.created_at) }}</p>
-                  <p class="text-xs text-gray-500">{{ formatTime(leave.created_at?.split(' ')[1]) }}</p>
-                </td>
-                <td class="px-4 py-3">
                   <div class="flex items-center justify-center gap-2">
                     <button
                       v-if="canEditLeave(leave)"
                       @click="openLeaveModal(leave)"
-                      class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      class="p-1.5 text-accent-solid hover:bg-accent-subtle rounded transition-colors"
                       title="Edit"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +191,7 @@
                     <button
                       v-if="canCancelLeave(leave)"
                       @click="openCancelModal(leave)"
-                      class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      class="p-1.5 text-danger hover:bg-status-red rounded transition-colors"
                       title="Cancel"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,15 +206,15 @@
         </div>
 
         <!-- Mobile Cards -->
-        <div class="lg:hidden divide-y divide-gray-200">
+        <div class="lg:hidden divide-y divide-border">
           <div
             v-for="leave in leaves"
             :key="leave.id"
-            class="p-4 hover:bg-gray-50 transition-colors"
+            class="p-4 hover:bg-surface-sunken transition-colors"
           >
             <!-- Header -->
             <div class="flex items-start justify-between mb-3">
-              <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700">
+              <span class="inline-flex items-center whitespace-nowrap px-2 py-1 rounded-md text-xs font-medium bg-status-purple text-status-text">
                 {{ leave.leave_type?.name }}
               </span>
               <span :class="getStatusClass(leave.status)" class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap">
@@ -229,39 +225,39 @@
             <!-- Details -->
             <div class="space-y-2 mb-3">
               <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Dates:</span>
-                <span class="font-medium text-gray-900">{{ formatDateRange(leave.start_date, leave.end_date) }}</span>
+                <span class="text-text-muted">Dates:</span>
+                <span class="font-medium text-text">{{ formatDateRange(leave.start_date, leave.end_date) }}</span>
               </div>
               <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Duration:</span>
-                <span class="font-medium text-gray-900">
+                <span class="text-text-muted">Duration:</span>
+                <span class="font-medium text-text">
                   {{ leave.formatted_duration || (leave.calculated_days + ' day' + (leave.calculated_days >= 2 ? 's' : '')) }}
                   ({{ leave.duration || 'All Day' }})
                 </span>
               </div>
               <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Submitted:</span>
-                <span class="font-medium text-gray-900">{{ formatDate(leave.created_at) }}</span>
+                <span class="text-text-muted">Submitted:</span>
+                <span class="font-medium text-text">{{ formatDate(leave.created_at) }}</span>
               </div>
               <div class="text-sm">
-                <span class="text-gray-500">Reason:</span>
-                <p class="text-gray-900 mt-1 line-clamp-2">{{ leave.reason || 'No reason provided' }}</p>
+                <span class="text-text-muted">Reason:</span>
+                <p class="text-text mt-1 line-clamp-2">{{ leave.reason || 'No reason provided' }}</p>
               </div>
               
               <!-- Notes Column (Rejection/Approval Notes) -->
               <div v-if="leave.rejection_note || leave.notes" class="text-sm">
-                <span class="text-gray-500">Notes:</span>
-                <p v-if="leave.rejection_note" class="text-red-600 mt-1 line-clamp-2">
+                <span class="text-text-muted">Notes:</span>
+                <p v-if="leave.rejection_note" class="text-danger mt-1 line-clamp-2">
                   <span class="font-semibold">{{ leave.status === 'cancelled' ? 'Cancelled: ' : 'Rejected: ' }}</span>{{ leave.rejection_note }}
                 </p>
-                <p v-else-if="leave.notes" class="text-gray-600 mt-1 line-clamp-2">{{ leave.notes }}</p>
+                <p v-else-if="leave.notes" class="text-text-muted mt-1 line-clamp-2">{{ leave.notes }}</p>
               </div>
               
               <div v-if="leave.attachment" class="flex justify-between text-sm">
-                <span class="text-gray-500">Attachment:</span>
+                <span class="text-text-muted">Attachment:</span>
                 <button
                   @click="openAttachmentModal(leave.attachment)"
-                  class="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  class="text-accent-solid hover:text-accent-hover flex items-center gap-1"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
@@ -276,14 +272,14 @@
               <button
                 v-if="canEditLeave(leave)"
                 @click="openLeaveModal(leave)"
-                class="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                class="flex-1 px-3 py-2 text-sm font-medium text-white bg-accent-solid hover:bg-accent-hover rounded-lg transition-colors"
               >
                 Edit
               </button>
               <button
                 v-if="canCancelLeave(leave)"
                 @click="openCancelModal(leave)"
-                class="flex-1 px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                class="flex-1 px-3 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -292,32 +288,32 @@
         </div>
       </div>
 
-      <div v-if="leaves.length > 0" class="mt-6">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+      <!-- Pagination sits inside the same card as the table -->
+      <div v-if="leaves.length > 0" class="border-t border-border px-4 py-3">
           <div class="flex items-center justify-between sm:hidden">
             <button
               @click="changePage(currentPage - 1)"
               :disabled="currentPage <= 1"
-              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
             
-            <span class="text-sm text-gray-700">
+            <span class="text-sm text-text">
               Page {{ currentPage }} of {{ lastPage }}
             </span>
             
             <button
               @click="changePage(currentPage + 1)"
               :disabled="currentPage >= lastPage"
-              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>
           </div>
 
           <div class="hidden sm:flex sm:flex-col sm:space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-            <div class="flex items-center text-sm text-gray-700">
+            <div class="flex items-center text-sm text-text">
               <span>Showing {{ (currentPage - 1) * perPage + 1 }} to {{ Math.min(currentPage * perPage, totalItems) }} of {{ totalItems }} results</span>
             </div>
             
@@ -325,7 +321,7 @@
               <button
                 @click="changePage(currentPage - 1)"
                 :disabled="currentPage <= 1"
-                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
@@ -333,32 +329,32 @@
               <button
                 @click="changePage(currentPage + 1)"
                 :disabled="currentPage >= lastPage"
-                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
             </div>
           </div>
-        </div>
+      </div>
       </div>
 
       <!-- Leave Modal -->
       <div v-if="showModal" class="fixed inset-0 flex items-center justify-center z-50">
         <div class="absolute inset-0 bg-black/50" @click="closeModal"></div>
-        <div class="relative bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
-          <div class="p-6 border-b border-gray-100">
+        <div class="relative bg-surface rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
+          <div class="p-6 border-b border-border">
             <div class="flex items-center justify-between">
-              <h3 class="text-xl font-semibold text-gray-900">{{ editingLeave ? 'Edit Leave Request' : 'File New Leave Request' }}</h3>
-              <button @click="closeModal" class="p-2 rounded-lg hover:bg-gray-100">
-                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <h3 class="text-xl font-semibold text-text">{{ editingLeave ? 'Edit Leave Request' : 'File New Leave Request' }}</h3>
+              <button @click="closeModal" class="p-2 rounded-lg hover:bg-surface-sunken">
+                <svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
 
           <form @submit.prevent="submitLeave" class="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Leave Type *</label>
-              <select v-model="form.leaves_type_id" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" required>
+              <label class="block text-sm font-medium text-text mb-2">Leave Type *</label>
+              <select v-model="form.leaves_type_id" class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200" required>
                 <option value="">Select leave type</option>
                 <option v-for="type in leaveTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
               </select>
@@ -366,43 +362,43 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                <label class="block text-sm font-medium text-text mb-2">Start Date *</label>
                 <input
                   v-model="form.start_date"
                   type="date"
                   :min="thirtyDaysAgoISO"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  :class="{'border-red-500': dateRangeError}"
+                  class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
+                  :class="{'border-danger': dateRangeError}"
                   required
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
+                <label class="block text-sm font-medium text-text mb-2">End Date *</label>
                 <input
                   v-model="form.end_date"
                   type="date"
                   :min="form.start_date || thirtyDaysAgoISO"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  :class="{'border-red-500': dateRangeError}"
+                  class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
+                  :class="{'border-danger': dateRangeError}"
                   required
                 />
               </div>
             </div>
 
-            <div v-if="dateRangeError" class="bg-red-50 rounded-xl p-4">
-              <p class="text-sm text-red-800 flex items-center gap-2">
+            <div v-if="dateRangeError" class="bg-status-red rounded-xl p-4">
+              <p class="text-sm text-danger flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 {{ dateRangeError }}
               </p>
             </div>
 
-            <div v-if="form.start_date && form.end_date" class="bg-blue-50 rounded-xl p-4">
-              <p class="text-sm text-blue-800"><span class="font-medium">Duration:</span> {{ calculateFormDays() }}</p>
+            <div v-if="form.start_date && form.end_date" class="bg-accent-subtle rounded-xl p-4">
+              <p class="text-sm text-text"><span class="font-medium">Duration:</span> {{ calculateFormDays() }}</p>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Duration *</label>
-              <select v-model="form.duration" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" required>
+              <label class="block text-sm font-medium text-text mb-2">Duration *</label>
+              <select v-model="form.duration" class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200" required>
                 <option value="All Day">All Day</option>
                 <option value="Half Day (8am to 12nn)">Half Day (8am to 12nn)</option>
                 <option value="Half Day (1pm to 5pm)">Half Day (1pm to 5pm)</option>
@@ -412,30 +408,30 @@
 
             <div v-if="form.duration === 'Custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">From *</label>
-                <input v-model="form.time_in" type="time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" required />
+                <label class="block text-sm font-medium text-text mb-2">From *</label>
+                <input v-model="form.time_in" type="time" class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200" required />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">To *</label>
-                <input v-model="form.time_out" type="time" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" required />
+                <label class="block text-sm font-medium text-text mb-2">To *</label>
+                <input v-model="form.time_out" type="time" class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200" required />
               </div>
             </div>
 
             <div v-if="requiresAttachment" class="space-y-2">
-              <label class="block text-sm font-medium text-gray-700">Medical Certificate *</label>
-              <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors duration-200">
+              <label class="block text-sm font-medium text-text">Medical Certificate *</label>
+              <div class="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-accent transition-colors duration-200">
                 <input type="file" @change="handleFileChange" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="hidden" ref="fileInput" />
                 <div v-if="!selectedFileName" @click="$refs.fileInput.click()" class="cursor-pointer">
-                  <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                  <p class="text-sm text-gray-600 mb-2">Click to upload medical certificate</p>
-                  <p class="text-xs text-gray-500">PDF, JPG, PNG, DOC, DOCX (max 2MB)</p>
+                  <svg class="w-12 h-12 text-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                  <p class="text-sm text-text-muted mb-2">Click to upload medical certificate</p>
+                  <p class="text-xs text-text-muted">PDF, JPG, PNG, DOC, DOCX (max 2MB)</p>
                 </div>
                 <div v-else class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="text-sm text-gray-700">{{ selectedFileName }}</span>
+                    <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="text-sm text-text">{{ selectedFileName }}</span>
                   </div>
-                  <button type="button" @click="removeFile" class="text-red-600 hover:text-red-700 p-1">
+                  <button type="button" @click="removeFile" class="text-danger hover:text-danger p-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
@@ -443,13 +439,13 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
-              <textarea v-model="form.reason" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" placeholder="Please provide a reason for your leave request..." required></textarea>
+              <label class="block text-sm font-medium text-text mb-2">Reason *</label>
+              <textarea v-model="form.reason" rows="4" class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 resize-none" placeholder="Please provide a reason for your leave request..." required></textarea>
             </div>
 
             <div class="flex gap-3 pt-4">
-              <button type="button" @click="closeModal" class="flex-1 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors duration-200">Cancel</button>
-              <button type="submit" :disabled="submitting" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              <button type="button" @click="closeModal" class="flex-1 px-6 py-3 text-text bg-surface-sunken hover:bg-canvas rounded-xl font-medium transition-colors duration-200">Cancel</button>
+              <button type="submit" :disabled="submitting" class="flex-1 px-6 py-3 bg-accent-solid text-white rounded-xl font-medium hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span v-if="submitting" class="flex items-center justify-center gap-2">
                   <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   {{ editingLeave ? 'Updating...' : 'Submitting...' }}
@@ -464,12 +460,12 @@
       <!-- Cancel Modal -->
       <div v-if="showCancelModal" class="fixed inset-0 flex items-center justify-center z-50">
         <div class="absolute inset-0 bg-black/50" @click="closeCancelModal"></div>
-        <div class="relative bg-white rounded-2xl max-w-md w-full mx-4">
-          <div class="p-6 border-b border-gray-100">
+        <div class="relative bg-surface rounded-2xl max-w-md w-full mx-4">
+          <div class="p-6 border-b border-border">
             <div class="flex items-center justify-between">
-              <h3 class="text-xl font-semibold text-gray-900">Cancel Leave Request</h3>
-              <button @click="closeCancelModal" class="p-2 rounded-lg hover:bg-gray-100">
-                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 class="text-xl font-semibold text-text">Cancel Leave Request</h3>
+              <button @click="closeCancelModal" class="p-2 rounded-lg hover:bg-surface-sunken">
+                <svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
               </button>
@@ -478,13 +474,13 @@
 
           <form @submit.prevent="submitCancellation" class="p-6 space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-text mb-2">
                 Reason for Cancellation *
               </label>
               <textarea 
                 v-model="cancellationReason" 
                 rows="4" 
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none" 
+                class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200 resize-none" 
                 placeholder="Please provide a reason for cancelling this leave request..."
                 required
               ></textarea>
@@ -494,14 +490,14 @@
               <button 
                 type="button" 
                 @click="closeCancelModal" 
-                class="flex-1 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors duration-200"
+                class="flex-1 px-6 py-3 text-text bg-surface-sunken hover:bg-canvas rounded-xl font-medium transition-colors duration-200"
               >
                 Keep Leave
               </button>
               <button 
                 type="submit" 
                 :disabled="cancelSubmitting" 
-                class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="flex-1 px-6 py-3 bg-danger text-white rounded-xl font-medium hover:bg-danger/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="cancelSubmitting" class="flex items-center justify-center gap-2">
                   <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -517,13 +513,13 @@
       <!-- Attachment Modal -->
       <div v-if="showAttachmentModal" class="fixed inset-0 flex items-center justify-center z-50">
         <div class="absolute inset-0 bg-black/50" @click="closeAttachmentModal"></div>
-        <div class="relative bg-white rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-          <div class="p-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">Attachment</h3>
+        <div class="relative bg-surface rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+          <div class="p-4 border-b border-border flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-text">Attachment</h3>
             <div class="flex items-center gap-2">
-              <a :href="getAttachmentUrl(currentAttachment)" target="_blank" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download</a>
-              <button @click="closeAttachmentModal" class="p-2 rounded-lg hover:bg-gray-100">
-                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <a :href="getAttachmentUrl(currentAttachment)" target="_blank" class="px-3 py-1 text-sm bg-accent-solid text-white rounded-lg hover:bg-accent-hover">Download</a>
+              <button @click="closeAttachmentModal" class="p-2 rounded-lg hover:bg-surface-sunken">
+                <svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
@@ -535,19 +531,29 @@
             <div v-else class="text-center">
               <iframe v-if="getFileExtension(currentAttachment) === 'pdf'" :src="getAttachmentUrl(currentAttachment)" class="w-full h-[70vh] border rounded-lg"></iframe>
               <div v-else class="py-12">
-                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <div class="w-16 h-16 mx-auto mb-4 bg-surface-sunken rounded-full flex items-center justify-center">
+                  <svg class="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </div>
-                <p class="text-gray-600 mb-4">{{ currentAttachment?.split('/').pop() }}</p>
-                <p class="text-sm text-gray-500 mb-4">This file type cannot be previewed. Click Download to view the file.</p>
+                <p class="text-text-muted mb-4">{{ currentAttachment?.split('/').pop() }}</p>
+                <p class="text-sm text-text-muted mb-4">This file type cannot be previewed. Click Download to view the file.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Hover tooltip for clamped cells. Fixed positioning so the table's
+           overflow-x-auto wrapper cannot clip it. -->
+      <div
+        v-if="tip.show"
+        class="pointer-events-none fixed z-[60] max-w-sm rounded-lg bg-text px-3 py-2 text-xs leading-relaxed text-white shadow-lg"
+        :style="{ left: tip.x + 'px', top: tip.y + 'px' }"
+      >
+        {{ tip.text }}
+      </div>
+
       <!-- Success/Error Messages -->
-      <div v-if="message" :class="['fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300', message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white']">
+      <div v-if="message" :class="['fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300', message.type === 'success' ? 'bg-success text-white' : 'bg-danger text-white']">
         <div class="flex items-center gap-2">
           <svg v-if="message.type === 'success'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -575,12 +581,13 @@ export default {
       perPage: 10,
       currentStatus: '',
       filters: {
+        status: '',
         leaveTypeId: '',
         startDate: '',
         endDate: ''
       },
       statusFilters: [
-        { label: 'All', value: '', count: 0 },
+        { label: 'All Statuses', value: '', count: 0 },
         { label: 'Pending', value: 'pending', count: 0 },
         { label: 'Approved', value: 'approved', count: 0 },
         { label: 'Rejected', value: 'rejected', count: 0 },
@@ -591,6 +598,7 @@ export default {
       editingLeave: null,
       selectedFileName: '',
       message: null,
+      tip: { show: false, text: '', x: 0, y: 0 },
       showAttachmentModal: false,
       currentAttachment: null,
       showCancelModal: false,
@@ -616,6 +624,18 @@ export default {
     }
   },
   computed: {
+    // Remaining credits for the year, same five tiles as the dashboard.
+    leaveCreditTiles() {
+      const c = this.stats.credits || {}
+      return [
+        { label: 'PTO', value: c.pto ?? 0, unit: 'd' },
+        { label: 'VL',  value: c.vl  ?? 0, unit: 'd' },
+        { label: 'SL',  value: c.sl  ?? 0, unit: 'd' },
+        { label: 'BDO', value: c.bdo ?? 0, unit: 'd' },
+        { label: 'CTO', value: c.cto ?? 0, unit: 'hrs' },
+      ]
+    },
+
     todayISO() {
       const d = new Date()
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
@@ -652,10 +672,6 @@ export default {
       const t = this.leaveTypes.find(x => x.id == newId)
       if (t && !t.name?.includes('WITH Medical Certificate')) this.removeFile()
     },
-    currentStatus() {
-      this.currentPage = 1
-      this.loadData()
-    }
   },
   async mounted() {
     document.title = 'My Leaves'
@@ -755,12 +771,14 @@ export default {
     },
 
     applyFilters() {
+      this.currentStatus = this.filters.status
       this.currentPage = 1
       this.loadData()
     },
 
     clearFilters() {
       this.filters = {
+        status: '',
         leaveTypeId: '',
         startDate: '',
         endDate: ''
@@ -781,7 +799,10 @@ export default {
     updateStatusCounts() {
       this.statusFilters.forEach(filter => {
         if (filter.value === '') {
-          filter.count = this.totalItems || 0
+          // stats.total is the unfiltered count. totalItems is the paginated
+          // total of whichever status is selected, so it would make the All
+          // chip read "1" while Pending was active.
+          filter.count = this.stats.total ?? this.totalItems ?? 0
         } else if (this.stats[filter.value] !== undefined) {
           filter.count = this.stats[filter.value]
         } else {
@@ -790,13 +811,30 @@ export default {
       })
     },
 
+    /** Only worth a tooltip when the cell is actually clamped. */
+    showTip(event, text) {
+      const el = event.currentTarget;
+      if (!text || el.scrollHeight <= el.clientHeight + 1) return;
+      const r = el.getBoundingClientRect();
+      this.tip = {
+        show: true,
+        text,
+        x: Math.min(r.left, window.innerWidth - 400),
+        y: r.bottom + 8,
+      };
+    },
+
+    hideTip() {
+      this.tip.show = false;
+    },
+
     getStatusClass(status) {
       switch (status) {
-        case 'pending': return 'bg-yellow-100 text-yellow-800'
-        case 'approved': return 'bg-green-100 text-green-800'
-        case 'rejected': return 'bg-red-100 text-red-800'
-        case 'cancelled': return 'bg-gray-100 text-gray-800'
-        default: return 'bg-gray-100 text-gray-800'
+        case 'pending': return 'bg-status-yellow text-status-text'
+        case 'approved': return 'bg-status-green text-status-text'
+        case 'rejected': return 'bg-status-red text-status-text'
+        case 'cancelled': return 'bg-status-gray text-status-text'
+        default: return 'bg-status-gray text-status-text'
       }
     },
 
