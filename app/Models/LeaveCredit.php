@@ -18,6 +18,12 @@ class LeaveCredit extends Model
         'sl_credits',
         'sl_used',
         'sl_pending',
+        'pto_credits',
+        'pto_used',
+        'pto_pending',
+        'cto_hours',
+        'cto_used_hours',
+        'cto_pending_hours',
         'birthday_leave_count',
     ];
 
@@ -30,6 +36,12 @@ class LeaveCredit extends Model
         'sl_credits' => 'decimal:2',
         'sl_used' => 'decimal:2',
         'sl_pending' => 'decimal:2',
+        'pto_credits' => 'decimal:2',
+        'pto_used' => 'decimal:2',
+        'pto_pending' => 'decimal:2',
+        'cto_hours' => 'decimal:2',
+        'cto_used_hours' => 'decimal:2',
+        'cto_pending_hours' => 'decimal:2',
         'birthday_leave_count' => 'decimal:2',
     ];
 
@@ -39,7 +51,9 @@ class LeaveCredit extends Model
         'total_vl', 
         'total_sl',
         'vl_carried_over_remaining',
-        'vl_current_year_remaining'
+        'vl_current_year_remaining',
+        'pto_remaining',
+        'cto_remaining_hours'
     ];
 
     public function user(): BelongsTo
@@ -59,6 +73,18 @@ class LeaveCredit extends Model
     public function getSlRemainingAttribute(): float
     {
         return $this->sl_credits - $this->sl_used - $this->sl_pending;
+    }
+
+    /** PTO is tracked in days, same shape as VL and SL. */
+    public function getPtoRemainingAttribute(): float
+    {
+        return (float) $this->pto_credits - (float) $this->pto_used - (float) $this->pto_pending;
+    }
+
+    /** CTO is compensatory time off granted by HR, tracked in HOURS, not days. */
+    public function getCtoRemainingHoursAttribute(): float
+    {
+        return (float) $this->cto_hours - (float) $this->cto_used_hours - (float) $this->cto_pending_hours;
     }
 
     public function getTotalVlAttribute(): float

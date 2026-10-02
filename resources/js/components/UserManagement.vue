@@ -673,18 +673,6 @@
             >
           </div>
 
-          <!-- Glip URL -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Glip URL *</label>
-            <input
-              v-model="userForm.glip_url"
-              type="url"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="https://glip.com/user/..."
-            >
-          </div>
-
           <!-- Role Selection -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
@@ -795,14 +783,6 @@
             <div>
               <h4 class="text-xl font-semibold text-gray-900">{{ selectedUser.name }}</h4>
               <p class="text-sm text-gray-600">{{ selectedUser.email }}</p>
-              <a 
-                v-if="selectedUser.glip_url"
-                :href="selectedUser.glip_url" 
-                target="_blank"
-                class="text-xs text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                {{ selectedUser.glip_url }}
-              </a>
               <span
                 :class="[
                   'inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium',
@@ -989,7 +969,6 @@ export default {
     const userForm = reactive({
       name: '',
       email: '',
-      glip_url: '',
       password: '',
       role_id: '',
       user_id: '',
@@ -1135,7 +1114,6 @@ export default {
         
         userForm.name = userData.name
         userForm.email = userData.email
-        userForm.glip_url = userData.glip_url || ''
         userForm.password = ''
         userForm.role_id = userData.roles && userData.roles.length > 0 ? userData.roles[0].id : ''
         userForm.team_id = userData.team_id || ''
@@ -1148,7 +1126,6 @@ export default {
         // Fallback to user object data if API fails
         userForm.name = user.name
         userForm.email = user.email
-        userForm.glip_url = user.glip_url || ''
         userForm.password = ''
         userForm.role_id = user.roles && user.roles.length > 0 ? user.roles[0].id : ''
         userForm.team_id = user.team_id || ''
@@ -1227,7 +1204,6 @@ export default {
     const resetForm = () => {
       userForm.name = ''
       userForm.email = ''
-      userForm.glip_url = ''
       userForm.password = ''
       userForm.role_id = ''
       userForm.team_id = ''

@@ -17,7 +17,7 @@ Schedule::command('attendance:auto-timeout')
     ->timezone('Asia/Manila')
     ->withoutOverlapping();
 
-// Auto-approve pending leaves and overtime after 3 days - runs daily at 9 AM
+// Auto-approve pending leaves after 3 days - runs daily at 9 AM
 Schedule::command('requests:auto-approve')
     ->dailyAt('09:00')
     ->timezone('Asia/Manila')

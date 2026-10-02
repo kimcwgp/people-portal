@@ -28,11 +28,6 @@ class StoreUserRequest extends FormRequest
                 'max:255',
                 'unique:users,email',
             ],
-            'glip_url' => [
-                'nullable',
-                'url',
-                'max:500',
-            ],
             'password' => [
                 'nullable',
                 'string',
@@ -67,7 +62,6 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => 'full name',
             'email' => 'email address',
-            'glip_url' => 'Glip webhook URL',
             'role_id' => 'role',
             'team_id' => 'team',
             'shift_id' => 'shift',
@@ -82,7 +76,6 @@ class StoreUserRequest extends FormRequest
             'email.email' => 'Please provide a valid email address.',
             'email.unique' => 'This email address is already registered.',
             'password.min' => 'Password must be at least 8 characters long.',
-            'glip_url.url' => 'Please provide a valid URL for the Glip webhook.',
             'role_id.required' => 'Please select a role for this user.',
             'role_id.exists' => 'The selected role does not exist.',
             'immediate_sup_id.exists' => 'The selected supervisor does not exist.',
@@ -101,7 +94,6 @@ class StoreUserRequest extends FormRequest
         }
 
         $this->merge([
-            'glip_url' => $this->glip_url ?: null,
             'password' => $this->password ?: null,
             'role_id' => $this->role_id ?: null,
             'team_id' => $this->team_id ?: null,

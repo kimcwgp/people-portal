@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\{Leave, Overtime, ShiftChangeRequest, AttendanceCorrection};
+use App\Models\{Leave, ShiftChangeRequest, AttendanceCorrection, Timesheet};
 
 class ApprovalRequest extends FormRequest
 {
@@ -26,9 +26,9 @@ class ApprovalRequest extends FormRequest
         // Check authorization based on model type
         return match(true) {
             $model instanceof Leave => $this->canApproveLeave($user, $model),
-            $model instanceof Overtime => $this->canApproveOvertime($user, $model),
             $model instanceof ShiftChangeRequest => $this->canApproveShiftChange($user, $model),
             $model instanceof AttendanceCorrection => $this->canApproveAttendanceCorrection($user, $model),
+            $model instanceof Timesheet => $this->canApproveTimesheet($user, $model),
             default => false
         };
     }
@@ -40,12 +40,6 @@ class ApprovalRequest extends FormRequest
             return $leave instanceof Leave 
                 ? $leave 
                 : Leave::with('user')->find($leave);
-        }
-
-        if ($overtime = $this->route('overtime')) {
-            return $overtime instanceof Overtime 
-                ? $overtime 
-                : Overtime::with('user')->find($overtime);
         }
 
         if ($shiftChangeRequest = $this->route('shiftChangeRequest')) {
@@ -60,6 +54,12 @@ class ApprovalRequest extends FormRequest
                 : AttendanceCorrection::with('user')->find($attendanceCorrection);
         }
 
+        if ($timesheet = $this->route('timesheet')) {
+            return $timesheet instanceof Timesheet
+                ? $timesheet
+                : Timesheet::with('user')->find($timesheet);
+        }
+
         return null;
     }
 
@@ -67,15 +67,6 @@ class ApprovalRequest extends FormRequest
     {
         // Must be the assigned supervisor
         return $leave->user && $leave->user->immediate_sup_id === $user->id;
-    }
-
-    private function canApproveOvertime($user, Overtime $overtime): bool
-    {
-        // Must be the supervisor OR project manager
-        return $overtime->user && (
-            $overtime->user->immediate_sup_id === $user->id ||
-            $overtime->project_manager_id === $user->id
-        );
     }
 
     private function canApproveShiftChange($user, ShiftChangeRequest $shiftRequest): bool
@@ -88,6 +79,12 @@ class ApprovalRequest extends FormRequest
     {
         // Must be the assigned supervisor
         return $correction->user && $correction->user->immediate_sup_id === $user->id;
+    }
+
+    private function canApproveTimesheet($user, Timesheet $timesheet): bool
+    {
+        // Must be the assigned supervisor
+        return $timesheet->user && $timesheet->user->immediate_sup_id === $user->id;
     }
 
     public function rules(): array

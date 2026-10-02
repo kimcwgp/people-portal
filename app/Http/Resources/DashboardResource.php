@@ -85,9 +85,10 @@ class DashboardResource extends JsonResource
             'sl_remaining' => $stats['sl_remaining'] ?? 0,
             'vl_carried_over_remaining' => $stats['vl_carried_over_remaining'] ?? 0,
             'birthday_leave_available' => $stats['birthday_leave_available'] ?? 1,
+            'pto_remaining' => $stats['pto_remaining'] ?? 0,
+            'cto_remaining_hours' => $stats['cto_remaining_hours'] ?? 0,
             'total_working_hours_today' => $stats['total_working_hours_today'] ?? '0h 0m',
             'total_break_time_today' => $stats['total_break_time_today'] ?? '0m',
-            'overtime_hours' => $stats['overtime_hours'] ?? '0m',
             'this_week_hours' => $stats['this_week_hours'] ?? '0h 0m',
         ];
     }
@@ -107,12 +108,15 @@ class DashboardResource extends JsonResource
     {
         $requests = $this->resource['requests'] ?? [];
         
-        // Ensure each request has required fields
+        // Ensure each request has required fields. Type-specific keys are
+        // passed through too -- the detail modal reads them for the Shift
+        // Change and Time Entries panels.
         return collect($requests)->map(function ($request) {
-            return [
+            $base = [
                 'id' => $request['id'] ?? null,
                 'type' => $request['type'] ?? 'unknown',
                 'name' => $request['name'] ?? 'Unknown User',
+                'email' => $request['email'] ?? null,
                 'avatar' => $request['avatar'] ?? $this->generateAvatarUrl($request['name'] ?? 'User'),
                 'leave_type' => $request['leave_type'] ?? $request['type'] ?? null,
                 'start_date' => $request['start_date'] ?? null,
@@ -121,7 +125,15 @@ class DashboardResource extends JsonResource
                 'reason' => $request['reason'] ?? null,
                 'status' => $request['status'] ?? 'pending',
                 'created_at' => $request['created_at'] ?? null,
+                'submitted_at' => $request['submitted_at'] ?? null,
             ];
+
+            $extra = array_intersect_key($request, array_flip([
+                'current_shift', 'requested_shift', 'effective_date',    // shift change
+                'week_label', 'total_hours', 'timesheet_detail',         // time entries
+            ]));
+
+            return $base + $extra;
         })->toArray();
     }
 

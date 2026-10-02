@@ -23,8 +23,6 @@ class StoreProjectRequest extends FormRequest
             'client_id' => 'required|exists:clients,id',
             'project_name' => 'required|string|max:255',
             'project_type_id' => 'required|exists:project_types,id', 
-            'pm_id' => 'nullable|exists:users,id',
-            'glip_url' => 'nullable|url|max:500',
             'description' => 'nullable|string|max:1000',
         ];
     }
@@ -39,8 +37,6 @@ class StoreProjectRequest extends FormRequest
             'client_id.exists' => 'The selected client is invalid.',
             'project_name.required' => 'Project name is required.',
             'project_name.max' => 'Project name cannot exceed 255 characters.',
-            'glip_url.url' => 'Please enter a valid Glip URL.',
-            'pm_id.exists' => 'The selected project manager is invalid.',
             'description.max' => 'Description cannot exceed 1000 characters.',
         ];
     }

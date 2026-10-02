@@ -18,8 +18,6 @@ class Project extends Model
         'project_name',
         'project_type_id',
         'clickup_url',
-        'pm_id',
-        'glip_url',
         'description',
     ];
 
@@ -37,19 +35,9 @@ class Project extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function projectManager(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'pm_id');
-    }
-
     public function projectType(): BelongsTo
     {
         return $this->belongsTo(ProjectType::class);
-    }
-
-    public function overtimes(): HasMany
-    {
-        return $this->hasMany(Overtime::class);
     }
 
     public function standups(): HasMany

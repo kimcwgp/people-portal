@@ -1,4 +1,152 @@
 @import 'tailwindcss';
+
+/* ==========================================================================
+   Design tokens
+   --------------------------------------------------------------------------
+   Tailwind v4 is configured here, in CSS -- tailwind.config.js is not loaded
+   (v4 only reads it via @config, which nothing does) and can be deleted.
+
+   Everything in @theme becomes BOTH a global custom property on :root and a
+   set of utilities, so `--color-accent` gives you `bg-accent`, `text-accent`,
+   `border-accent`, `ring-accent`, and `var(--color-accent)` in hand-written
+   CSS. Because the utilities compile to `var(--color-…)`, redefining a token
+   under a selector re-skins everything at once:
+
+       [data-theme="dark"] { --color-surface: #1c1c33; }
+
+   Three tiers, and components should only ever use tier 2.
+   ========================================================================== */
+
+@theme {
+  /* ------------------------------------------------------------------
+     TIER 1 -- primitives. Raw palette, named for what the colour IS.
+     Only tier 2 should reference these. Rebranding = edit this block.
+     ------------------------------------------------------------------ */
+
+  /* Accent ramp, anchored on the brand gold #c6973d at 500. */
+  --color-gold-50: #fbf8f1;
+  --color-gold-100: #f6efe2;
+  --color-gold-200: #eee0c5;
+  --color-gold-300: #e3cb9e;
+  --color-gold-400: #d4b16e;
+  --color-gold-500: #c6973d;
+  --color-gold-600: #a67f33;
+  --color-gold-700: #876729;
+  --color-gold-800: #6b5221;
+  --color-gold-900: #533f1a;
+
+  /* Neutral ramp, interpolated between the three design anchors:
+     100 = the page background, 300 = the hairline, 900 = body text. */
+  --color-ink-50: #f5f5fb;
+  --color-ink-100: #ececfa;
+  --color-ink-200: #d7d7e5;
+  --color-ink-300: #c1c2cf;
+  --color-ink-400: #8d8ea5;
+  --color-ink-500: #6c6c8a;
+  --color-ink-600: #4f4f71;
+  --color-ink-700: #35355c;
+  --color-ink-800: #1d1c49;
+  --color-ink-900: #090838;
+  --color-ink-950: #05041f;
+
+  /* Single-value primitives. */
+  --color-card: #fcfcfc;
+  --color-crimson-700: #c1121f;
+  --color-forest-800: #15661f;
+  --color-tangerine-500: #ff780f;
+
+}
+
+/* Tier 2 lives in `@theme static` so every role token is emitted on :root
+   even when no utility references it yet -- otherwise Tailwind prunes the
+   unused ones and `var(--color-text)` in a component <style> block would
+   resolve to nothing. */
+@theme static {
+  /* ------------------------------------------------------------------
+     TIER 2 -- semantic. Named for what the colour is FOR.
+     This is the only tier components should use.
+     Designer's vocabulary -> token:
+       text-color-black  -> --color-text
+       text-color-white  -> --color-text-inverse
+       accent-gold       -> --color-accent
+       background-color  -> --color-canvas
+       card-white        -> --color-surface
+       line              -> --color-border
+       red/green/orange-dark -> --color-danger/success/warning
+     ------------------------------------------------------------------ */
+
+  /* Text */
+  --color-text: var(--color-ink-900);
+  --color-text-muted: var(--color-ink-500);
+  --color-text-subtle: var(--color-ink-400);
+  --color-text-inverse: #ffffff;
+
+  /* Surfaces */
+  --color-canvas: var(--color-ink-100);
+  --color-surface: var(--color-card);
+  --color-surface-sunken: var(--color-ink-50);
+  --color-border: var(--color-ink-300);
+  --color-border-strong: var(--color-ink-400);
+
+  /* Accent. `accent` is the brand gold; pair it with text-text, NOT
+     text-white -- white on #c6973d is only 2.66:1 and fails WCAG AA.
+     `accent-solid` is the darkened gold that IS safe under white text. */
+  --color-accent: var(--color-gold-500);
+  --color-accent-hover: var(--color-gold-600);
+  --color-accent-solid: var(--color-gold-700);
+  --color-accent-subtle: var(--color-gold-100);
+
+  /* Feedback */
+  --color-danger: var(--color-crimson-700);
+  --color-success: var(--color-forest-800);
+  --color-warning: var(--color-tangerine-500);
+
+  /* Status badge fills. All of them sit under --color-status-text. */
+  --color-status-green: #dcfcdf;
+  --color-status-red: #fff1f2;
+  --color-status-orange: #ffeed4;
+  --color-status-yellow: #fcfcc5;
+  --color-status-blue: #d6efff;
+  --color-status-indigo: #ebe9ff;
+  --color-status-cyan: #d6efff;
+  --color-status-purple: #d3d5ff;
+  --color-status-gray: #eef0f0;
+  --color-status-text: #090809;
+
+}
+
+@theme {
+  /* ------------------------------------------------------------------
+     TIER 3 -- retrofit. Remaps Tailwind's stock scales onto the brand so
+     the ~3,300 hardcoded colour classes already in the components adopt
+     the theme without touching any markup. Delete this block once the
+     components have migrated to tier 2.
+     ------------------------------------------------------------------ */
+
+  /* Neutrals: every gray-* in the app becomes brand-tinted. */
+  --color-gray-50: var(--color-ink-50);
+  --color-gray-100: var(--color-ink-100);
+  --color-gray-200: var(--color-ink-200);
+  --color-gray-300: var(--color-ink-300);
+  --color-gray-400: var(--color-ink-400);
+  --color-gray-500: var(--color-ink-500);
+  --color-gray-600: var(--color-ink-600);
+  --color-gray-700: var(--color-ink-700);
+  --color-gray-800: var(--color-ink-800);
+  --color-gray-900: var(--color-ink-900);
+  --color-gray-950: var(--color-ink-950);
+
+  /* Interactive blues -> gold. Shades are picked so the EXISTING markup
+     stays accessible: blue-600 carries white button labels (5.25:1) and
+     blue-500 is the focus ring (3.59:1 against a card).
+     The light tints (50-300) and dark text shades (800/900) are left blue
+     on purpose -- they are the `bg-blue-100 / text-blue-800` info badges,
+     which the design keeps blue (#d6efff). */
+  --color-blue-400: var(--color-gold-400);
+  --color-blue-500: var(--color-gold-600);
+  --color-blue-600: var(--color-gold-700);
+  --color-blue-700: var(--color-gold-800);
+}
 /* @tailwind base;
 @tailwind components;
 @tailwind utilities; */

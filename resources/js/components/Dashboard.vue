@@ -1,144 +1,205 @@
 <template>
-  <div class="p-2 sm:p-4 bg-gray-50 min-h-screen overflow-x-hidden">
+  <div class="p-2 sm:p-4 bg-canvas min-h-screen overflow-x-hidden">
 
-    <!-- Request Detail Modal -->
-    <div v-if="selectedRequest" class="fixed inset-0 bg-gray-900 bg-opacity-20 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div class="bg-white rounded-xl sm:rounded-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-t-xl sm:rounded-t-2xl z-10">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <img :src="selectedRequest.avatar" :alt="selectedRequest.name" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0" @error="handleImageError">
-              <div class="min-w-0 flex-1">
-                <h2 class="text-base sm:text-xl font-semibold text-gray-900 truncate">{{ selectedRequest.leave_type || 'Request' }}</h2>
-                <p class="text-xs sm:text-sm text-gray-600 truncate">{{ selectedRequest.name }}</p>
-              </div>
+    <!-- ================================================================
+         Approval dialog: ONE modal, two views.
+         A request card opens the list; picking a row swaps the same shell
+         over to the detail view, with a back arrow instead of a second
+         stacked modal. One scrim, one focus context, one Escape target.
+         ================================================================ -->
+    <div v-if="approvalModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div class="absolute inset-0 bg-text/40" @click="closeApprovalModal"></div>
+
+      <div
+        ref="approvalModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="approval-modal-title"
+        tabindex="-1"
+        class="relative z-10 flex max-h-[88vh] w-full flex-col overflow-hidden rounded-xl bg-surface shadow-2xl outline-none sm:rounded-2xl"
+        :class="showingDetail ? 'max-w-2xl' : 'max-w-3xl'"
+      >
+        <div class="h-1 flex-shrink-0 bg-accent"></div>
+
+        <!-- Header swaps with the view -->
+        <div class="flex flex-shrink-0 items-start gap-3 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+          <button
+            v-if="showingDetail"
+            @click="backToList"
+            class="-ml-1 mt-0.5 flex-shrink-0 rounded p-1.5 text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
+            aria-label="Back to list"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+
+          <img v-if="showingDetail" :src="selectedRequest.avatar" :alt="selectedRequest.name"
+               class="h-11 w-11 flex-shrink-0 rounded-full ring-2 ring-accent/30" @error="handleImageError">
+
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 id="approval-modal-title" class="truncate text-base font-semibold text-text sm:text-lg">
+                {{ showingDetail ? getRequestTypeLabel(selectedRequest.type) : listModalTitle }}
+              </h2>
+              <span v-if="showingDetail" :class="getStatusBadgeClass(selectedRequest.status)"
+                    class="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                {{ selectedRequest.status }}
+              </span>
             </div>
-            <button @click="selectedRequest = null" class="text-gray-400 hover:text-gray-600 p-2 flex-shrink-0">
-              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+            <p class="mt-0.5 truncate text-sm text-text-muted">
+              <template v-if="showingDetail">
+                {{ selectedRequest.name }}
+                <span v-if="selectedRequest.created_at"> &middot; {{ formatRelativeDate(selectedRequest.created_at) }}</span>
+              </template>
+              <template v-else>
+                {{ pendingCount }} pending {{ pendingCount === 1 ? 'request' : 'requests' }}
+              </template>
+            </p>
           </div>
+
+          <button @click="closeApprovalModal" class="-mr-1 flex-shrink-0 p-2 text-text-subtle hover:text-text-muted" aria-label="Close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
 
-        <div class="p-4 sm:p-6">
-          <div class="mb-4">
-            <span :class="getRequestTypeBadgeClass(selectedRequest.type)" class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-              {{ getRequestTypeLabel(selectedRequest.type) }}
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 gap-4 sm:gap-6 mb-4 sm:mb-6">
-            <div class="space-y-3 sm:space-y-4">
-              <div>
-                <label class="text-xs sm:text-sm font-medium text-gray-500">Employee</label>
-                <p class="text-sm sm:text-base text-gray-900 mt-1">{{ selectedRequest.name }}</p>
-                <p class="text-gray-600 text-xs sm:text-sm">{{ selectedRequest.email }}</p>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label class="text-xs sm:text-sm font-medium text-gray-500">Request Type</label>
-                  <p class="text-sm sm:text-base text-gray-900 mt-1">{{ selectedRequest.leave_type || 'General Request' }}</p>
-                </div>
-
-                <div>
-                  <label class="text-xs sm:text-sm font-medium text-gray-500">Status</label>
-                  <p class="text-gray-900 mt-1">
-                    <span :class="getStatusBadgeClass(selectedRequest.status)" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium">
-                      {{ selectedRequest.status }}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                <div v-if="selectedRequest.start_date">
-                  <label class="text-xs sm:text-sm font-medium text-gray-500">Start Date</label>
-                  <p class="text-sm sm:text-base text-gray-900 mt-1">{{ formatRequestDate(selectedRequest.start_date) }}</p>
-                </div>
-
-                <div v-if="selectedRequest.end_date && selectedRequest.start_date !== selectedRequest.end_date">
-                  <label class="text-xs sm:text-sm font-medium text-gray-500">End Date</label>
-                  <p class="text-sm sm:text-base text-gray-900 mt-1">{{ formatRequestDate(selectedRequest.end_date) }}</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                <div v-if="selectedRequest.duration">
-                  <label class="text-xs sm:text-sm font-medium text-gray-500">Duration</label>
-                  <p class="text-sm sm:text-base text-gray-900 mt-1">{{ selectedRequest.duration }}</p>
-                </div>
-
-                <div>
-                  <label class="text-xs sm:text-sm font-medium text-gray-500">Submitted</label>
-                  <p class="text-sm sm:text-base text-gray-900 mt-1">{{ selectedRequest.submitted_at || formatRequestDate(selectedRequest.created_at) }}</p>
-                </div>
-              </div>
+        <!-- Body swaps with the view -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+          <template v-if="showingDetail">
+          <dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <dt class="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Request type</dt>
+              <dd class="mt-1 text-sm text-text">{{ selectedRequest.leave_type || getRequestTypeLabel(selectedRequest.type) }}</dd>
             </div>
-          </div>
 
-          <div v-if="selectedRequest.type === 'overtime'" class="mb-4 sm:mb-6 p-3 sm:p-4 bg-orange-50 rounded-lg">
-            <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Overtime Details</h3>
-            <div class="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-              <div v-if="selectedRequest.time_in">
-                <span class="text-gray-500">Time In:</span>
-                <span class="ml-2 text-gray-900">{{ selectedRequest.time_in }}</span>
-              </div>
-              <div v-if="selectedRequest.time_out">
-                <span class="text-gray-500">Time Out:</span>
-                <span class="ml-2 text-gray-900">{{ selectedRequest.time_out }}</span>
-              </div>
-              <div v-if="selectedRequest.ot_hours">
-                <span class="text-gray-500">OT Hours:</span>
-                <span class="ml-2 text-gray-900">{{ selectedRequest.ot_hours }}h</span>
-              </div>
-              <div v-if="selectedRequest.project_name" class="col-span-2">
-                <span class="text-gray-500">Project:</span>
-                <span class="ml-2 text-gray-900">{{ selectedRequest.project_name }}</span>
-              </div>
+            <div v-if="selectedRequest.start_date">
+              <dt class="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                {{ selectedRequest.end_date && selectedRequest.end_date !== selectedRequest.start_date ? 'Dates' : 'Date' }}
+              </dt>
+              <dd class="mt-1 text-sm text-text">
+                {{ formatRequestDate(selectedRequest.start_date) }}
+                <template v-if="selectedRequest.end_date && selectedRequest.end_date !== selectedRequest.start_date">
+                  &ndash; {{ formatRequestDate(selectedRequest.end_date) }}
+                </template>
+              </dd>
             </div>
-          </div>
 
-          <div v-if="selectedRequest.type === 'shift'" class="mb-4 sm:mb-6 p-3 sm:p-4 bg-purple-50 rounded-lg">
-            <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Shift Change Details</h3>
+            <div v-if="selectedRequest.duration">
+              <dt class="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Duration</dt>
+              <dd class="mt-1 text-sm text-text">{{ selectedRequest.duration }}</dd>
+            </div>
+
+            <div v-if="selectedRequest.email">
+              <dt class="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Email</dt>
+              <dd class="mt-1 truncate text-sm text-text">{{ selectedRequest.email }}</dd>
+            </div>
+
+            <div>
+              <dt class="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Submitted</dt>
+              <dd class="mt-1 text-sm text-text">{{ selectedRequest.submitted_at || formatRequestDate(selectedRequest.created_at) }}</dd>
+            </div>
+          </dl>
+
+          <div class="my-5 border-t border-border"></div>
+
+          <div v-if="selectedRequest.type === 'shift'" class="mb-4 sm:mb-6 p-3 sm:p-4 bg-status-purple/60 rounded-lg">
+            <h3 class="text-xs sm:text-sm font-medium text-text mb-2 sm:mb-3">Shift Change Details</h3>
             <div class="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
               <div v-if="selectedRequest.current_shift">
-                <span class="text-gray-500">Current Shift:</span>
-                <span class="ml-2 text-gray-900">{{ selectedRequest.current_shift }}</span>
+                <span class="text-text-muted">Current Shift:</span>
+                <span class="ml-2 text-text">{{ selectedRequest.current_shift }}</span>
               </div>
               <div v-if="selectedRequest.requested_shift">
-                <span class="text-gray-500">Requested Shift:</span>
-                <span class="ml-2 text-gray-900 font-semibold">{{ selectedRequest.requested_shift }}</span>
+                <span class="text-text-muted">Requested Shift:</span>
+                <span class="ml-2 text-text font-semibold">{{ selectedRequest.requested_shift }}</span>
               </div>
               <div v-if="selectedRequest.effective_date" class="col-span-2">
-                <span class="text-gray-500">Effective Date:</span>
-                <span class="ml-2 text-gray-900">{{ selectedRequest.effective_date }}</span>
+                <span class="text-text-muted">Effective Date:</span>
+                <span class="ml-2 text-text">{{ selectedRequest.effective_date }}</span>
               </div>
+            </div>
+          </div>
+
+          <div v-if="selectedRequest.type === 'timesheet' && selectedRequest.timesheet_detail" class="mb-4 sm:mb-6 overflow-hidden rounded-lg border border-border">
+            <div class="flex items-center justify-between gap-3 border-b border-border bg-status-green px-3 py-2 sm:px-4">
+              <h3 class="text-xs sm:text-sm font-medium text-status-text">
+                Time Entries &middot; {{ selectedRequest.timesheet_detail.week_label }}
+              </h3>
+              <span class="flex-shrink-0 rounded bg-surface px-2 py-0.5 text-[11px] font-semibold text-text">
+                {{ formatSheetHours(selectedRequest.timesheet_detail.total_hours) }} hrs
+              </span>
+            </div>
+
+            <div v-if="!selectedRequest.timesheet_detail.entries || !selectedRequest.timesheet_detail.entries.length" class="px-3 py-6 text-center sm:px-4">
+              <p class="text-sm text-text-muted">No lines on this timesheet.</p>
+            </div>
+
+            <div v-else class="overflow-x-auto">
+              <table class="w-full min-w-[720px]">
+                <thead class="border-b border-border bg-surface-sunken">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Project / Task</th>
+                    <th class="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">Time Type</th>
+                    <th v-for="day in selectedRequest.timesheet_detail.days" :key="day.key"
+                        :class="['px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-wider', day.is_weekend ? 'text-text-subtle' : 'text-text-muted']">
+                      <span class="block">{{ day.label }}</span>
+                      <span class="block text-[10px] font-normal">{{ day.day_of_month }}</span>
+                      <span class="block text-[11px] font-semibold text-text">{{ formatSheetHours(day.total) }}</span>
+                    </th>
+                    <th class="px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-text-muted">Total</th>
+                  </tr>
+                </thead>
+
+                <tbody class="divide-y divide-border">
+                  <tr v-for="entry in selectedRequest.timesheet_detail.entries" :key="entry.id">
+                    <td class="px-3 py-2 align-top">
+                      <span class="block text-sm text-text">{{ entry.project_name || '—' }}</span>
+                      <span v-if="entry.project_ticket" class="block text-[11px] text-text-muted">{{ entry.project_ticket }}</span>
+                      <span v-if="entry.memo" class="block text-[11px] text-text-muted">{{ entry.memo }}</span>
+                    </td>
+                    <td class="px-3 py-2 align-top">
+                      <span v-if="entry.time_type" :class="sheetTintClass(entry.time_type.tint)"
+                            class="inline-block rounded px-2 py-0.5 text-[11px] font-medium">
+                        {{ entry.time_type.name }}
+                      </span>
+                      <span v-else class="text-[11px] text-text-subtle">&mdash;</span>
+                    </td>
+                    <td v-for="day in selectedRequest.timesheet_detail.days" :key="day.key"
+                        :class="['px-2 py-2 text-center text-sm align-top', day.is_weekend ? 'text-text-muted' : 'text-text']">
+                      {{ entry[day.key + '_hours'] ? formatSheetHours(entry[day.key + '_hours']) : '—' }}
+                    </td>
+                    <td class="px-3 py-2 text-center align-top text-sm font-semibold text-text">
+                      {{ formatSheetHours(entry.row_total) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
           <div v-if="selectedRequest.reason" class="mb-4 sm:mb-6">
-            <label class="text-xs sm:text-sm font-medium text-gray-500 block mb-2">Reason/Notes</label>
-            <div class="bg-gray-50 rounded-lg p-3 sm:p-4">
-              <p class="text-sm sm:text-base text-gray-900 whitespace-pre-wrap">{{ selectedRequest.reason }}</p>
+            <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Reason / Notes</p>
+            <div class="rounded-lg border border-border bg-surface-sunken p-3 sm:p-4">
+              <p class="text-sm text-text whitespace-pre-wrap">{{ selectedRequest.reason }}</p>
             </div>
           </div>
 
-          <div v-if="(selectedRequest.status === 'pending' || selectedRequest.status === 'PENDING') && (selectedRequest.type === 'leave' || selectedRequest.type === 'overtime' || selectedRequest.type === 'shift')" class="pt-4 border-t border-gray-200">
+          <div v-if="(selectedRequest.status === 'pending' || selectedRequest.status === 'PENDING') && ['leave','shift','timesheet'].includes(selectedRequest.type)" class="sticky bottom-0 -mx-4 sm:-mx-6 mt-4 border-t border-border bg-surface px-4 sm:px-6 py-3">
             <div v-if="showRejectionNote" class="w-full mb-4">
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Reason for Rejection</label>
+              <label class="block text-xs sm:text-sm font-medium text-text mb-2">Reason for Rejection</label>
               <textarea 
                 v-model="rejectionNote" 
                 placeholder="Please provide a reason for rejecting this request..."
                 rows="3"
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                class="w-full text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-danger resize-none"
               ></textarea>
               <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-3">
-                <button @click="handleRequestAction('reject')" :disabled="!rejectionNote.trim() || processing" class="w-full sm:flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm rounded-lg">
+                <button @click="handleRequestAction('reject')" :disabled="!rejectionNote.trim() || processing" class="w-full sm:flex-1 px-4 py-2 bg-danger hover:bg-danger/90 disabled:bg-danger/40 text-white text-sm rounded-lg">
                   {{ processing ? 'Rejecting...' : 'Confirm Rejection' }}
                 </button>
-                <button @click="cancelRejection" class="w-full sm:flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm rounded-lg">
+                <button @click="cancelRejection" class="w-full sm:flex-1 px-4 py-2 bg-surface-sunken hover:bg-canvas border border-border text-text text-sm rounded-lg">
                   Cancel
                 </button>
               </div>
@@ -148,7 +209,7 @@
               <button 
                 @click="handleRequestAction('approve')" 
                 :disabled="processing"
-                class="w-full sm:flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm sm:text-base font-medium rounded-xl transition-colors flex items-center justify-center space-x-2"
+                class="w-full sm:flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-success hover:bg-success/90 disabled:bg-success/40 text-white text-sm sm:text-base font-medium rounded-xl transition-colors flex items-center justify-center space-x-2"
               >
                 <svg v-if="!processing" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -159,7 +220,7 @@
               <button 
                 @click="showRejectionNote = true" 
                 :disabled="processing"
-                class="w-full sm:flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm sm:text-base font-medium rounded-xl transition-colors flex items-center justify-center space-x-2"
+                class="w-full sm:flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-danger hover:bg-danger/90 disabled:bg-danger/40 text-white text-sm sm:text-base font-medium rounded-xl transition-colors flex items-center justify-center space-x-2"
               >
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -169,29 +230,80 @@
             </div>
           </div>
 
-          <div v-else-if="selectedRequest.type !== 'leave' && selectedRequest.type !== 'overtime' && selectedRequest.type !== 'shift'" class="pt-4 border-t border-gray-200">
+          <div v-else-if="!['leave','shift','timesheet'].includes(selectedRequest.type)" class="sticky bottom-0 -mx-4 sm:-mx-6 mt-4 border-t border-border bg-surface px-4 sm:px-6 py-3">
             <div class="text-center py-4">
-              <span class="inline-flex items-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 text-gray-700">
+              <span class="inline-flex items-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium bg-surface-sunken text-text">
                 This request type can only be viewed here. Please use the appropriate module to approve/reject.
               </span>
             </div>
           </div>
 
-          <div v-else class="pt-4 border-t border-gray-200">
+          <div v-else class="sticky bottom-0 -mx-4 sm:-mx-6 mt-4 border-t border-border bg-surface px-4 sm:px-6 py-3">
             <div class="text-center py-4">
               <span :class="getStatusBadgeClass(selectedRequest.status)" class="inline-flex items-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium">
                 {{ selectedRequest.status === 'approved' ? 'Already Approved' : 'Already Rejected' }}
               </span>
             </div>
           </div>
+          </template>
+
+
+          <template v-else>
+          <div class="space-y-2 sm:space-y-3">
+            <button
+              v-for="request in getRequestsByType(listModalType)"
+              :key="`${request.type}-${request.id}`"
+              @click="viewRequest(request)"
+              class="flex w-full items-center gap-3 rounded-lg border border-border bg-surface-sunken px-3 py-2.5 text-left transition-colors hover:border-accent hover:bg-canvas"
+            >
+              <img :src="request.avatar" :alt="request.name" class="h-9 w-9 flex-shrink-0 rounded-full" @error="handleImageError">
+
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center gap-2">
+                  <span class="truncate text-sm font-semibold text-text">{{ request.name }}</span>
+                  <span :class="getStatusBadgeClass(request.status)" class="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                    {{ request.status }}
+                  </span>
+                </span>
+                <span class="mt-0.5 block truncate text-xs text-text-muted">
+                  {{ request.leave_type || getRequestTypeLabel(request.type) }}
+                  <template v-if="request.duration"> &middot; {{ request.duration }}</template>
+                </span>
+                <span class="block text-[11px] text-text-muted">{{ formatRelativeDate(request.created_at) }}</span>
+              </span>
+
+              <span class="flex flex-shrink-0 items-center gap-2 text-right">
+                <span>
+                  <span class="block whitespace-nowrap text-xs font-medium text-text">{{ formatCompactDate(request.start_date) }}</span>
+                  <span v-if="request.start_date !== request.end_date" class="block whitespace-nowrap text-[11px] text-text-muted">
+                    &ndash; {{ formatCompactDate(request.end_date) }}
+                  </span>
+                </span>
+                <svg class="h-4 w-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </span>
+            </button>
+
+            <div v-if="getRequestsByType(listModalType).length === 0" class="py-10 text-center">
+              <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-sunken">
+                <svg class="h-6 w-6 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <p class="text-sm text-text-muted">Nothing left to approve here.</p>
+            </div>
+          </div>
+          </template>
+
         </div>
       </div>
     </div>
 
     <!-- Time Out Confirmation Modal -->
     <div v-if="showTimeOutConfirmation" class="fixed inset-0 flex items-center justify-center z-50 p-4">
-      <div class="absolute inset-0 bg-black bg-opacity-50" @click="showTimeOutConfirmation = false"></div>
-      <div class="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-md w-full mx-4 transform transition-all shadow-2xl relative z-10">
+      <div class="absolute inset-0 bg-text/40" @click="showTimeOutConfirmation = false"></div>
+      <div class="bg-surface rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-md w-full mx-4 transform transition-all shadow-2xl relative z-10">
         <div class="text-center">
           <div class="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-red-100 rounded-full flex items-center justify-center">
             <svg class="w-6 h-6 sm:w-8 sm:h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,369 +341,177 @@
       </div>
     </div>
 
-    <!-- Header - Hidden on mobile, shown on desktop -->
-    <div class="hidden lg:flex items-center justify-between mb-4 bg-white shadow-sm px-6 py-3 rounded-2xl">
-      <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <!-- Greeting -->
+    <div class="flex items-center justify-between mb-3 sm:mb-4 bg-white shadow-sm px-4 sm:px-6 py-3 rounded-xl sm:rounded-2xl">
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Hello, {{ firstName }}!</h1>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
-      <!-- Time Action & Notes Column -->
-      <div class="space-y-3 sm:space-y-4">
-        <!-- Time Action Button with Dropdown -->
-        <div class="relative">
-          <button @click="showTimeActionDropdown = !showTimeActionDropdown" :disabled="clockingIn || loading" :class="['w-full text-white rounded-xl sm:rounded-2xl p-4 sm:p-6 text-left transition-all transform hover:scale-102 flex items-center justify-between', clockingIn || loading ? 'opacity-50 cursor-not-allowed' : 'shadow-lg', getButtonColor()]">
-            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div class="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg v-if="!clockingIn" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getCurrentActionIcon()" />
-                </svg>
-                <svg v-else class="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+    <!-- Attendance card -->
+    <!-- z-20 + no overflow-hidden here: the action dropdown has to escape this
+         card. The watermark gets its own clipping wrapper instead. -->
+    <div class="bg-gray-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white relative z-20 mb-3 sm:mb-4">
+      <div class="absolute inset-0 overflow-hidden rounded-xl sm:rounded-2xl pointer-events-none">
+        <div class="absolute right-0 top-0 w-40 h-40 sm:w-64 sm:h-64 opacity-10">
+          <img src="@/assets/cwgp-logo.webp" alt="" class="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      <div class="relative z-10">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-6">
+          <div class="min-w-0">
+            <p class="text-white/70 text-xs sm:text-sm mb-1">Current Date</p>
+            <p class="text-base sm:text-lg lg:text-xl font-semibold truncate">
+              {{ currentTime }}, {{ formatCurrentDate() }}
+            </p>
+            <div class="flex items-center space-x-2 mt-2">
+              <div :class="['w-2 h-2 rounded-full', statusDotClass]"></div>
+              <span class="text-xs sm:text-sm text-white/70">{{ status }}</span>
+            </div>
+          </div>
+
+          <!-- Time in / out, with the break actions in a dropdown -->
+          <div class="relative sm:w-56 flex-shrink-0">
+            <button @click="showTimeActionDropdown = !showTimeActionDropdown" :disabled="clockingIn || loading" :class="['w-full rounded-lg sm:rounded-xl px-4 py-3 transition-colors flex items-center justify-between gap-2', clockingIn || loading ? 'opacity-50 cursor-not-allowed' : 'shadow-lg', getButtonColor()]">
+              <span class="flex items-center gap-2 min-w-0">
+                <svg v-if="clockingIn" class="w-4 h-4 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="font-semibold text-base sm:text-lg block truncate">{{ clockingIn ? 'Processing...' : getCurrentActionText() }}</span>
-                <span class="text-xs sm:text-sm text-white/80 truncate block">{{ getCurrentActionSubtext() }}</span>
-              </div>
-            </div>
-            
-            <div class="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-              <svg :class="['w-3 h-3 sm:w-4 sm:h-4 transition-transform', showTimeActionDropdown ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span class="font-semibold truncate">{{ clockingIn ? 'Processing...' : getCurrentActionText() }}</span>
+              </span>
+              <svg :class="['w-4 h-4 flex-shrink-0 transition-transform', showTimeActionDropdown ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
-            </div>
-          </button>
+            </button>
 
           <!-- Dropdown Menu -->
-          <div v-if="showTimeActionDropdown && !clockingIn && !loading" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-10">
-            <button v-if="!isLoggedIn" @click="handleTimeAction('time_in')" class="w-full px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-blue-50 transition-colors border-b border-gray-50 flex items-center space-x-2 sm:space-x-3">
-              <div class="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          <div v-if="showTimeActionDropdown && !clockingIn && !loading"
+               class="absolute top-full left-0 right-0 z-30 mt-2 overflow-hidden rounded-xl border border-border bg-surface shadow-xl sm:rounded-2xl">
+            <button
+              v-for="action in timeActions"
+              :key="action.key"
+              @click="handleTimeAction(action.key)"
+              class="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-surface-sunken"
+            >
+              <span :class="['flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg', action.tint]">
+                <svg class="h-4 w-4 text-status-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="action.icon" />
                 </svg>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="font-medium text-gray-900 text-sm sm:text-base">Time In</span>
-                <p class="text-xs sm:text-sm text-gray-500">Start your work day</p>
-              </div>
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-medium text-text">{{ action.label }}</span>
+                <span class="block text-xs text-text-muted">{{ action.hint }}</span>
+              </span>
             </button>
-
-            <button v-if="isLoggedIn && !activeBreak" @click="handleTimeAction('time_out')" class="w-full px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-red-50 transition-colors border-b border-gray-50 flex items-center space-x-2 sm:space-x-3">
-              <div class="w-7 h-7 sm:w-8 sm:h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                </svg>
-              </div>
-              <div class="min-w-0 flex-1">
-                <span class="font-medium text-gray-900 text-sm sm:text-base">Time Out</span>
-                <p class="text-xs sm:text-sm text-gray-500">End your work day</p>
-              </div>
-            </button>
-
-            <template v-if="isLoggedIn && !activeBreak">
-              <button @click="handleTimeAction('break_lunch')" class="w-full px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-amber-50 transition-colors border-b border-gray-50 flex items-center space-x-2 sm:space-x-3">
-                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <span class="font-medium text-gray-900 text-sm sm:text-base">Start Lunch Break</span>
-                  <p class="text-xs sm:text-sm text-gray-500">Take your lunch break</p>
-                </div>
-              </button>
-
-              <button @click="handleTimeAction('break_brb')" class="w-full px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-purple-50 transition-colors border-b border-gray-50 flex items-center space-x-2 sm:space-x-3">
-                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <span class="font-medium text-gray-900 text-sm sm:text-base">Be Right Back</span>
-                  <p class="text-xs sm:text-sm text-gray-500">Quick break (BRB)</p>
-                </div>
-              </button>
-            </template>
-
-            <template v-if="activeBreak">
-              <button @click="handleTimeAction('break_end')" class="w-full px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-green-50 transition-colors flex items-center space-x-2 sm:space-x-3">
-                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <span class="font-medium text-gray-900 text-sm sm:text-base">End {{ activeBreak.label || activeBreak.type }}</span>
-                  <p class="text-xs sm:text-sm text-gray-500">Return to work</p>
-                </div>
-              </button>
-            </template>
           </div>
 
           <div v-if="showTimeActionDropdown" @click="showTimeActionDropdown = false" class="fixed inset-0 z-0"></div>
-        </div>
-
-        <!-- Daily Notes -->
-        <div class="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm">
-          <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Daily Notes</label>
-          <textarea v-model="dailyNotes" placeholder="Add notes for your work day..." rows="3" class="w-full text-sm border border-gray-200 rounded-lg sm:rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" :disabled="loading"></textarea>
-          <p class="text-xs text-gray-500 mt-1">These notes will be saved with your time entries</p>
-        </div>
-      </div>
-
-      <!-- Status Card -->
-      <div class="lg:col-span-2">
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white relative overflow-hidden min-h-[280px] sm:min-h-[320px]">
-          <div class="absolute right-0 top-0 w-40 h-40 sm:w-64 sm:h-64 opacity-10">
-            <img src="@/assets/cwgp-logo.webp" alt="CWGP Logo" class="w-full h-full object-cover" />
           </div>
-          <div class="absolute right-4 top-4 sm:right-8 sm:top-8 w-12 h-12 sm:w-20 sm:h-20 bg-white/5 rounded-full"></div>
-          <div class="absolute right-8 top-8 sm:right-16 sm:top-16 w-8 h-8 sm:w-12 sm:h-12 bg-white/10 rounded-full"></div>
-          <div class="absolute right-12 top-12 sm:right-24 sm:top-24 w-4 h-4 sm:w-6 sm:h-6 bg-blue-300/30 rounded-full animate-pulse"></div>
-          <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-white/5"></div>
+        </div>
 
-          <div class="relative z-10">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
-              <div>
-                <p class="text-blue-100 text-xs sm:text-sm mb-1">Current Time</p>
-                <p class="text-2xl sm:text-3xl lg:text-4xl font-bold">{{ currentTime }}</p>
-              </div>
-              <div>
-                <p class="text-blue-100 text-xs sm:text-sm mb-1">{{ formatCurrentDate() }}</p>
-                <div class="flex items-center space-x-2">
-                  <div :class="['w-2 h-2 sm:w-3 sm:h-3 rounded-full', statusDotClass]"></div>
-                  <p class="text-lg sm:text-xl lg:text-2xl font-semibold">{{ status }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4">
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3">
-                <p class="text-blue-100 text-xs mb-1">Time In</p>
-                <p class="text-base sm:text-xl font-bold truncate">{{ formatTo12Hour(timeIn) || '--:--' }}</p>
-              </div>
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3">
-                <p class="text-blue-100 text-xs mb-1">Time Out</p>
-                <p class="text-base sm:text-xl font-bold truncate">{{ formatTo12Hour(timeOut) || '--:--' }}</p>
-              </div>
-            </div>
-
-            <!-- Stats Grid - Improved Layout -->
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3">
-              <!-- Working Hours -->
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center">
-                <p class="text-blue-100 text-xs mb-1">Total Working Hours</p>
-                <p class="text-sm sm:text-base lg:text-lg font-bold truncate">{{ workingHours }}</p>
-              </div>
-              
-              <!-- VL Carryover -->
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center hover:bg-white/15 transition-colors">
-                <p class="text-blue-100 text-xs mb-1">VL Carryover</p>
-                <p class="text-sm sm:text-base lg:text-lg font-bold">{{ vlCarryover }}<span class="text-xs">d</span></p>
-              </div>
-              
-              <!-- VL Remaining -->
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center hover:bg-white/15 transition-colors">
-                <p class="text-blue-100 text-xs mb-1">VL Remaining</p>
-                <p class="text-sm sm:text-base lg:text-lg font-bold">{{ vlRemaining }}<span class="text-xs">d</span></p>
-              </div>
-              
-              <!-- SL Remaining -->
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center hover:bg-white/15 transition-colors">
-                <p class="text-blue-100 text-xs mb-1">SL Remaining</p>
-                <p class="text-sm sm:text-base lg:text-lg font-bold">{{ slRemaining }}<span class="text-xs">d</span></p>
-              </div>
-              
-              <!-- Birthday Leave -->
-              <div class="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center hover:bg-white/15 transition-colors">
-                <p class="text-blue-100 text-xs mb-1">Birthday Leave</p>
-                <p class="text-sm sm:text-base lg:text-lg font-bold">{{ displayBirthdayLeave }}<span class="text-xs">d</span></p>
-              </div>
-            </div>
+        <!-- Glass tiles, per the design spec: white at 10%, hairline at 50% -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+          <div class="bg-white/10 border border-white/50 rounded-lg p-3">
+            <p class="text-white/70 text-xs mb-1">Time In</p>
+            <p class="text-lg sm:text-xl font-bold truncate">{{ formatTo12Hour(timeIn) || '--:--' }}</p>
+          </div>
+          <div class="bg-white/10 border border-white/50 rounded-lg p-3">
+            <p class="text-white/70 text-xs mb-1">Time Out</p>
+            <p class="text-lg sm:text-xl font-bold truncate">{{ formatTo12Hour(timeOut) || '--:--' }}</p>
+          </div>
+          <div class="bg-white/10 border border-white/50 rounded-lg p-3">
+            <p class="text-white/70 text-xs mb-1">Total Working Hours</p>
+            <p class="text-lg sm:text-xl font-bold truncate">{{ workingHours || '--.--' }}</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Bottom Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
-      <!-- Requests Section -->
-      <div class="lg:col-span-3 bg-white rounded-xl sm:rounded-2xl shadow-sm flex flex-col min-h-[400px] max-h-[600px] sm:max-h-[700px]">
-        <div class="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 flex-shrink-0 border-b sm:border-b-0">
-          <h2 class="text-lg sm:text-xl font-semibold text-gray-800">For My Approval</h2>
+    <!-- Leave credits -->
+    <div class="bg-surface rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-4 mb-3 sm:mb-4">
+      <h2 class="text-xs sm:text-sm font-semibold tracking-wide text-text-muted uppercase mb-3">Available Leave Credits</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+        <div v-for="credit in leaveCreditTiles" :key="credit.label" class="rounded-lg border border-border px-3 py-2">
+          <p class="text-xs text-text-muted">{{ credit.label }}</p>
+          <p class="text-base sm:text-lg font-bold text-text">
+            {{ credit.value }}<span class="text-xs font-medium text-text-muted ml-0.5">{{ credit.unit }}</span>
+          </p>
         </div>
-        
-        <!-- Request Type Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-4 sm:px-6 flex-shrink-0">
-          <div @click="expandRequestType('leave')" :class="['relative p-4 sm:p-5 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg group', getRequestsByType('leave').length > 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200' : 'bg-gray-50 border border-gray-200']">
-            <div v-if="getRequestsByType('leave').length > 1" class="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl transform rotate-1 -z-10 border border-blue-200"></div>
-            <div v-if="getRequestsByType('leave').length > 2" class="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl transform rotate-2 -z-20 border border-blue-200"></div>
-            <div class="relative z-10">
-              <div class="flex items-center justify-between mb-2 sm:mb-3">
-                <div :class="['w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center', getRequestsByType('leave').length > 0 ? 'bg-blue-500' : 'bg-gray-400']">
-                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                  </svg>
-                </div>
-                <div v-if="getRequestsByType('leave').length > 0" class="bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center animate-pulse">
-                  {{ getRequestsByType('leave').length }}
-                </div>
-              </div>
-              <h3 class="font-semibold text-sm sm:text-base text-gray-800 mb-1">Leave Requests</h3>
-              <p class="text-xs sm:text-sm text-gray-600">{{ getRequestsByType('leave').length > 0 ? `${getRequestsByType('leave').length} pending` : 'No pending requests' }}</p>
-              <div v-if="getRequestsByType('leave').length > 0" class="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-blue-200">
-                <div class="flex items-center space-x-2">
-                  <img :src="getRequestsByType('leave')[0].avatar" :alt="getRequestsByType('leave')[0].name" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full" @error="handleImageError">
-                  <span class="text-xs text-gray-600 truncate">{{ getRequestsByType('leave')[0].name }}</span>
-                </div>
-              </div>
-            </div>
+      </div>
+    </div>
+
+    <!-- For My Approval -->
+    <div class="bg-surface rounded-xl sm:rounded-2xl shadow-sm p-3 sm:p-4 mb-3 sm:mb-4">
+      <h2 class="text-xs sm:text-sm font-semibold tracking-wide text-text-muted uppercase mb-3">Requests</h2>
+
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 sm:gap-3">
+        <button
+          v-for="card in requestCards"
+          :key="card.type"
+          @click="expandRequestType(card.type)"
+          :class="['flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors',
+                   card.count > 0 ? [card.fill, 'border-border hover:brightness-95'] : 'bg-surface-sunken border-border hover:bg-canvas']"
+        >
+          <span :class="['flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md',
+                         card.count > 0 ? 'bg-white/70 text-text' : 'bg-border text-text-muted']">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="card.icon" />
+            </svg>
+          </span>
+
+          <span class="min-w-0 flex-1">
+            <span :class="['block truncate text-sm font-semibold', card.count > 0 ? 'text-status-text' : 'text-text']">{{ card.label }}</span>
+            <span :class="['block text-xs', card.count > 0 ? 'text-status-text/70' : 'text-text-muted']">
+              {{ card.count > 0 ? `${card.count} pending` : 'Nothing pending' }}
+            </span>
+          </span>
+
+          <span v-if="card.count > 0" class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-text">
+            {{ card.count }}
+          </span>
+        </button>
+      </div>
+
+      <div v-if="requests.length === 0 && !loading" class="mt-3 text-center text-sm text-gray-500">
+        All caught up -- nothing needs your attention right now.
+      </div>
+    </div>
+
+    <!-- Announcements + holidays, matched height -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4 items-stretch lg:min-h-[420px]">
+      <!-- Holidays for the current month -- the heading follows the calendar -->
+      <div class="lg:col-span-2 min-h-[260px] lg:min-h-0">
+        <div class="bg-surface rounded-xl sm:rounded-2xl shadow-sm flex h-full flex-col">
+          <div class="p-3 sm:p-4 pb-2 sm:pb-3 border-b border-border flex-shrink-0">
+            <h3 class="text-xs sm:text-sm font-semibold tracking-wide text-text-muted uppercase">
+              Holiday for the month of {{ holidayMonthName }}
+            </h3>
           </div>
 
-          <div @click="expandRequestType('overtime')" :class="['relative p-4 sm:p-5 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg group', getRequestsByType('overtime').length > 0 ? 'bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200' : 'bg-gray-50 border border-gray-200']">
-            <div v-if="getRequestsByType('overtime').length > 1" class="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl transform rotate-1 -z-10 border border-orange-200"></div>
-            <div v-if="getRequestsByType('overtime').length > 2" class="absolute inset-0 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl transform rotate-2 -z-20 border border-orange-200"></div>
-            <div class="relative z-10">
-              <div class="flex items-center justify-between mb-2 sm:mb-3">
-                <div :class="['w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center', getRequestsByType('overtime').length > 0 ? 'bg-orange-500' : 'bg-gray-400']">
-                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div v-if="getRequestsByType('overtime').length > 0" class="bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center animate-pulse">
-                  {{ getRequestsByType('overtime').length }}
-                </div>
-              </div>
-              <h3 class="font-semibold text-sm sm:text-base text-gray-800 mb-1">Overtime</h3>
-              <p class="text-xs sm:text-sm text-gray-600">{{ getRequestsByType('overtime').length > 0 ? `${getRequestsByType('overtime').length} pending` : 'No pending requests' }}</p>
-              <div v-if="getRequestsByType('overtime').length > 0" class="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-orange-200">
-                <div class="flex items-center space-x-2">
-                  <img :src="getRequestsByType('overtime')[0].avatar" :alt="getRequestsByType('overtime')[0].name" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full" @error="handleImageError">
-                  <span class="text-xs text-gray-600 truncate">{{ getRequestsByType('overtime')[0].name }}</span>
-                </div>
+          <div class="flex-1 overflow-y-auto p-4 sm:p-5">
+            <div v-if="loadingHolidays" class="text-sm text-gray-400">Loading holidays...</div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div v-for="group in holidayGroups" :key="group.key">
+                <p :class="['text-sm font-semibold mb-2', group.headingClass]">{{ group.label }}</p>
+                <ul v-if="group.items.length" class="space-y-2">
+                  <li v-for="holiday in group.items" :key="holiday.id" class="text-sm text-gray-700">
+                    <span class="font-medium">{{ holiday.name }}</span>
+                    <span class="block text-xs text-gray-500">{{ holiday.date_label }} &middot; {{ holiday.day_label }}</span>
+                  </li>
+                </ul>
+                <p v-else class="text-sm text-gray-500">None</p>
               </div>
             </div>
-          </div>
-
-          <div @click="expandRequestType('shift')" :class="['relative p-4 sm:p-5 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg group', getRequestsByType('shift').length > 0 ? 'bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200' : 'bg-gray-50 border border-gray-200']">
-            <div v-if="getRequestsByType('shift').length > 1" class="absolute inset-0 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl transform rotate-1 -z-10 border border-purple-200"></div>
-            <div v-if="getRequestsByType('shift').length > 2" class="absolute inset-0 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl transform rotate-2 -z-20 border border-purple-200"></div>
-            <div class="relative z-10">
-              <div class="flex items-center justify-between mb-2 sm:mb-3">
-                <div :class="['w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center', getRequestsByType('shift').length > 0 ? 'bg-purple-500' : 'bg-gray-400']">
-                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                  </svg>
-                </div>
-                <div v-if="getRequestsByType('shift').length > 0" class="bg-purple-500 text-white text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center animate-pulse">
-                  {{ getRequestsByType('shift').length }}
-                </div>
-              </div>
-              <h3 class="font-semibold text-sm sm:text-base text-gray-800 mb-1">Shift Changes</h3>
-              <p class="text-xs sm:text-sm text-gray-600">{{ getRequestsByType('shift').length > 0 ? `${getRequestsByType('shift').length} pending` : 'No pending requests' }}</p>
-              <div v-if="getRequestsByType('shift').length > 0" class="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-purple-200">
-                <div class="flex items-center space-x-2">
-                  <img :src="getRequestsByType('shift')[0].avatar" :alt="getRequestsByType('shift')[0].name" class="w-5 h-5 sm:w-6 sm:h-6 rounded-full" @error="handleImageError">
-                  <span class="text-xs text-gray-600 truncate">{{ getRequestsByType('shift')[0].name }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Expanded Request List -->
-        <div v-if="expandedRequestType" class="flex-1 overflow-hidden px-4 sm:px-6 pb-4 sm:pb-6 mt-3 sm:mt-0">
-          <div class="flex items-center justify-between mb-3 sm:mb-4 pt-3 sm:pt-4 border-t border-gray-100">
-            <h3 class="text-base sm:text-lg font-semibold text-gray-800 capitalize">{{ expandedRequestType }} Requests</h3>
-            <button @click="expandedRequestType = null" class="text-gray-400 hover:text-gray-600 p-1">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-          
-          <div class="h-full overflow-y-auto pr-1 sm:pr-2 -mr-1 sm:-mr-2">
-            <div class="space-y-2 sm:space-y-3">
-              <div v-for="request in getRequestsByType(expandedRequestType)" :key="`${request.type}-${request.id}`" 
-                   @click="viewRequest(request)" 
-                   class="bg-gray-50 hover:bg-blue-50 rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 border border-transparent hover:border-blue-200">
-                
-                <div class="flex items-start sm:items-center justify-between gap-2 sm:gap-3">
-                  <div class="flex items-start sm:items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-                    <img :src="request.avatar" :alt="request.name" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0 mt-0.5 sm:mt-0" @error="handleImageError">
-                    <div class="flex-1 min-w-0">
-                      <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                        <h4 class="font-medium text-sm sm:text-base text-gray-900 truncate">{{ request.name }}</h4>
-                        <span :class="getStatusBadgeClass(request.status)" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 self-start sm:self-auto">
-                          {{ request.status }}
-                        </span>
-                      </div>
-                      <p class="text-xs sm:text-sm text-gray-600 truncate">
-                        {{ request.leave_type || getRequestTypeLabel(request.type) }}
-                        <span v-if="request.duration" class="text-gray-400"> • {{ request.duration }}</span>
-                      </p>
-                      <p class="text-xs text-gray-500 mt-1">{{ formatRelativeDate(request.created_at) }}</p>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 flex-shrink-0">
-                    <div class="text-right">
-                      <p class="text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
-                        {{ formatCompactDate(request.start_date) }}
-                      </p>
-                      <p v-if="request.start_date !== request.end_date" class="text-xs text-gray-500 whitespace-nowrap">
-                        - {{ formatCompactDate(request.end_date) }}
-                      </p>
-                    </div>
-                    <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                  </div>
-                </div>
-
-                <div v-if="request.status === 'pending' || request.status === 'PENDING'" 
-                     class="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200 flex items-center justify-between">
-                  <span class="text-xs text-gray-500">Tap to approve/reject</span>
-                  <div class="flex items-center space-x-1">
-                    <div class="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                    <div class="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="getRequestsByType(expandedRequestType).length === 0" class="text-center py-8 sm:py-12">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <p class="text-gray-500 text-xs sm:text-sm">No {{ expandedRequestType }} requests found</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="requests.length === 0 && !loading && !expandedRequestType" class="flex-1 flex items-center justify-center p-4">
-          <div class="text-center py-8 sm:py-12">
-            <div class="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-2">All Caught Up!</h3>
-            <p class="text-sm sm:text-base text-gray-500">No pending requests need your attention right now.</p>
           </div>
         </div>
       </div>
 
-      <!-- Announcements Section -->
-      <div class="lg:col-span-2 bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[500px] sm:max-h-[600px]">
-        <div class="p-3 sm:p-4 pb-2 sm:pb-3 border-b border-gray-100 flex-shrink-0">
+      <div class="lg:col-span-3 min-h-[320px] lg:min-h-0">
+      <div class="bg-surface rounded-xl sm:rounded-2xl shadow-sm overflow-hidden flex h-full flex-col">
+        <div class="p-3 sm:p-4 pb-2 sm:pb-3 border-b border-border flex-shrink-0">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg sm:text-xl font-semibold text-gray-800">Company Announcements</h3>
+            <h3 class="text-xs sm:text-sm font-semibold tracking-wide text-text-muted uppercase">Company Announcement</h3>
           </div>
         </div>
 
@@ -648,9 +568,9 @@
           </div>
         </div>
       </div>
-
+      </div>
       <!-- Image Modal -->
-      <div v-if="viewImageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4" @click="viewImageModal = null">
+      <div v-if="viewImageModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4" @click="viewImageModal = null">
         <div class="max-w-4xl w-full max-h-full flex flex-col">
           <img :src="viewImageModal.url" :alt="viewImageModal.title" class="max-w-full max-h-[80vh] object-contain rounded-lg" @click.stop>
           <div v-if="viewImageModal.title" class="text-center mt-4">
@@ -673,8 +593,6 @@ export default {
       currentTime: '',
       currentDate: '',
       status: 'OUT',
-      showRejectionNote: false,
-      rejectionNote: '',
       isLoggedIn: false,
       showTimeActionDropdown: false,
       dailyNotes: '',
@@ -697,16 +615,24 @@ export default {
       isAutoTimeOut: false,
       autoTimeOutInterval: null,
       announcements: [],
-      requests: [],
       vlRemaining: 0,
       slRemaining: 0,
       vlCarryover: 0,
       birthdayLeave: 1,
+      ptoRemaining: 0,
+      ctoRemainingHours: 0,
+      holidays: { partners: [], people: [] },
+      holidayMonthLabel: '',
+      loadingHolidays: false,
       userRole: null,
-      userPermissions: [],
-      expandedRequestType: null,
+      requests: [],
+      listModalType: null,
       selectedRequest: null,
       processing: false,
+      rejectionNote: '',
+      showRejectionNote: false,
+      userName: '',
+      userPermissions: [],
     };
   },
 
@@ -725,28 +651,171 @@ export default {
     birthdayLeaveStatus() {
       const leave = parseFloat(this.birthdayLeave);
       return leave > 0 ? 'Available' : 'Used';
-    }
+    },
+
+    // "Juan Dela Cruz" -> "Juan". Falls back to the whole string when the
+    // account has no space in its name (e.g. an email-only login).
+    // Mirrors the original conditional dropdown exactly:
+    //   clocked out          -> Time In
+    //   clocked in, no break -> Time Out / Lunch / BRB
+    //   on a break           -> End <break>
+    timeActions() {
+      if (!this.isLoggedIn) {
+        return [{ key: 'time_in', label: 'Time In', hint: 'Start your work day', tint: 'bg-status-green',
+                  icon: 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1' }];
+      }
+
+      if (this.activeBreak) {
+        return [{ key: 'break_end', label: `End ${this.activeBreak.label || this.activeBreak.type}`,
+                  hint: 'Return to work', tint: 'bg-status-green',
+                  icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }];
+      }
+
+      return [
+        { key: 'time_out',    label: 'Time Out',          hint: 'End your work day',    tint: 'bg-status-red',
+          icon: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1' },
+        { key: 'break_lunch', label: 'Start Lunch Break', hint: 'Take your lunch break', tint: 'bg-status-yellow',
+          icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+        { key: 'break_brb',   label: 'Be Right Back',     hint: 'Quick break (BRB)',     tint: 'bg-status-purple',
+          icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+      ];
+    },
+
+    requestCards() {
+      return [
+        { type: 'leave',    label: 'Leave Requests', fill: 'bg-status-blue',
+          icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+        { type: 'shift',    label: 'Shift Changes',  fill: 'bg-status-purple',
+          icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+        { type: 'timesheet', label: 'Time Entries',   fill: 'bg-status-green',
+          icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+      ].map(card => ({ ...card, count: this.getRequestsByType(card.type).length }));
+    },
+
+    // The dialog is open whenever a type is selected; the detail view is just
+    // a second face of the same shell.
+    approvalModalOpen() {
+      return this.listModalType !== null;
+    },
+
+    showingDetail() {
+      return this.selectedRequest !== null;
+    },
+
+    pendingCount() {
+      return this.listModalType ? this.getRequestsByType(this.listModalType).length : 0;
+    },
+
+    listModalTitle() {
+      const titles = {
+        leave: 'Leave Requests',
+        shift: 'Shift Change Requests',
+        timesheet: 'Weekly Time Entries',
+      };
+      return titles[this.listModalType] || 'Requests';
+    },
+
+    leaveCreditTiles() {
+      return [
+        { label: 'PTO', value: this.ptoRemaining, unit: 'd' },
+        { label: 'VL', value: this.vlRemaining, unit: 'd' },
+        { label: 'SL', value: this.slRemaining, unit: 'd' },
+        { label: 'BDO', value: this.displayBirthdayLeave, unit: 'd' },
+        { label: 'CTO', value: this.ctoRemainingHours, unit: 'hrs' },
+      ];
+    },
+
+    // Falls back to the browser's month so the heading is never blank while
+    // the request is still in flight.
+    holidayMonthName() {
+      return this.holidayMonthLabel || new Date().toLocaleDateString('en-US', { month: 'long' });
+    },
+
+    holidayGroups() {
+      return [
+        { key: 'partners', label: 'Partners', headingClass: 'text-accent', items: this.holidays.partners || [] },
+        { key: 'people', label: 'People', headingClass: 'text-accent', items: this.holidays.people || [] },
+      ];
+    },
+
+    firstName() {
+      if (!this.userName) return 'there';
+      return this.userName.trim().split(/\s+/)[0];
+    },
+
   },
 
   async mounted() {
     this.userId = this.getUserId();
+    this.userName = this.getUserName();
+    document.addEventListener('keydown', this.onModalKeydown);
     this.updateTime();
     this.startIntervals();
 
     Promise.all([
       this.loadUserPermissions(),
       this.loadDashboardData(),
-      this.loadBulletinImages()
+      this.loadBulletinImages(),
+      this.loadHolidays()
     ]).catch(() => {});
   },
 
+  watch: {
+    // Lock the page behind the dialog and park focus inside it.
+    approvalModalOpen(open) {
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) {
+        this.$nextTick(() => this.$refs.approvalModal?.focus());
+      }
+    },
+  },
+
   beforeUnmount() {
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', this.onModalKeydown);
     this.clearIntervals();
     if (this.timeTicker) clearInterval(this.timeTicker);
     if (this.bulletinSlideInterval) clearInterval(this.bulletinSlideInterval);
   },
 
   methods: {
+    // No month/year params: the API defaults to the current month, so the
+    // panel rolls over on its own.
+    async loadHolidays() {
+      try {
+        this.loadingHolidays = true;
+        const { data } = await axios.get('/user/holidays/month');
+
+        if (data.success) {
+          this.holidays = {
+            partners: data.data.partners || [],
+            people: data.data.people || [],
+          };
+          this.holidayMonthLabel = data.data.month_name || '';
+        }
+      } catch (error) {
+        // A missing 'view holidays' permission just leaves the panel empty.
+        this.holidays = { partners: [], people: [] };
+      } finally {
+        this.loadingHolidays = false;
+      }
+    },
+
+    getUserName() {
+      try {
+        for (const store of [localStorage, sessionStorage]) {
+          const raw = store.getItem('user');
+          if (raw) {
+            const u = JSON.parse(raw);
+            if (u.name || u.username || u.email) return u.name || u.username || u.email;
+          }
+        }
+      } catch (e) {
+        // fall through to the default below
+      }
+      return '';
+    },
+
     getUserId() {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       if (userData.id) return userData.id;
@@ -761,35 +830,6 @@ export default {
         }
       }
       return null;
-    },
-
-    getRequestsByType(type) {
-      if (!this.requests || !Array.isArray(this.requests)) return [];
-      
-      const typeMap = {
-        'leave': ['leave', 'vacation', 'sick', 'personal'],
-        'overtime': ['overtime', 'ot'],
-        'attendance': ['attendance', 'correction', 'time'],
-        'shift': ['shift', 'schedule', 'change']
-      };
-      
-      return this.requests.filter(request => {
-        const requestType = (request.type || '').toLowerCase();
-        const requestLeaveType = (request.leave_type || '').toLowerCase();
-        
-        return typeMap[type]?.some(keyword => 
-          requestType.includes(keyword) || requestLeaveType.includes(keyword)
-        ) || false;
-      });
-    },
-
-    expandRequestType(type) {
-      const requestsOfType = this.getRequestsByType(type);
-      if (requestsOfType.length > 0) {
-        this.expandedRequestType = this.expandedRequestType === type ? null : type;
-      } else {
-        this.showToast(`No ${type} requests pending`, 'info');
-      }
     },
 
     async loadUserPermissions() {
@@ -870,6 +910,8 @@ export default {
         const { data } = await axios.get('/user/dashboard');
 
         const responseData = data.data || data;
+        if (Array.isArray(responseData.requests)) this.requests = responseData.requests;
+
         const a = responseData.attendance || {};
 
         if (responseData.stats) {
@@ -877,6 +919,8 @@ export default {
           this.slRemaining = responseData.stats.sl_remaining ?? this.slRemaining;
           this.vlCarryover = responseData.stats.vl_carried_over_remaining ?? this.vlCarryover;
           this.birthdayLeave = responseData.stats.birthday_leave_available ?? this.birthdayLeave;
+          this.ptoRemaining = responseData.stats.pto_remaining ?? this.ptoRemaining;
+          this.ctoRemainingHours = responseData.stats.cto_remaining_hours ?? this.ctoRemainingHours;
         }
 
         this.status = a.status || 'OUT';
@@ -887,7 +931,6 @@ export default {
         this.activeBreak = a.active_break || null;
 
         if (Array.isArray(responseData.announcements)) this.announcements = responseData.announcements;
-        if (Array.isArray(responseData.requests)) this.requests = responseData.requests;
       } catch (error) {
         this.showToast('Failed to load dashboard data', 'error');
       }
@@ -970,35 +1013,17 @@ export default {
     },
 
     getButtonColor() {
-      if (!this.isLoggedIn) {
-        return 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700';
-      }
-      if (this.activeBreak) {
-        return 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700';
-      }
-      return 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700';
+      // Warning is a bright orange -- white on it is only 2.64:1, so the
+      // break state carries navy text instead.
+      if (!this.isLoggedIn) return 'bg-success hover:bg-success/90 text-white';
+      if (this.activeBreak) return 'bg-warning hover:bg-warning/90 text-text';
+      return 'bg-danger hover:bg-danger/90 text-white';
     },
 
     getCurrentActionText() {
       if (!this.isLoggedIn) return 'Time In';
       if (this.activeBreak) return `End ${this.activeBreak.label || this.activeBreak.type}`;
       return 'Select Action';
-    },
-
-    getCurrentActionSubtext() {
-      if (!this.isLoggedIn) return 'Start your work day';
-      if (this.activeBreak) return 'Return to work';
-      return 'Choose time or break action';
-    },
-
-    getCurrentActionIcon() {
-      if (!this.isLoggedIn) {
-        return 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1';
-      }
-      if (this.activeBreak) {
-        return 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
-      }
-      return 'M19 9l-7 7-7-7';
     },
 
     handleTimeAction(action) {
@@ -1124,6 +1149,41 @@ export default {
       event.target.src = `https://ui-avatars.com/api/?name=${event.target.alt}&background=random&color=fff`;
     },
 
+    getRequestsByType(type) {
+      return this.requests.filter(request => request.type === type);
+    },
+
+    // A card opens the scrollable list modal rather than expanding in place.
+    expandRequestType(type) {
+      this.listModalType = type;
+    },
+
+    closeApprovalModal() {
+      this.listModalType = null;
+      this.selectedRequest = null;
+      this.showRejectionNote = false;
+      this.rejectionNote = '';
+    },
+
+    // Back arrow: drop the detail, keep the list open behind it.
+    backToList() {
+      this.selectedRequest = null;
+      this.showRejectionNote = false;
+      this.rejectionNote = '';
+    },
+
+    onModalKeydown(event) {
+      if (event.key !== 'Escape' || !this.approvalModalOpen) return;
+
+      event.stopPropagation();
+      // Escape steps back one level rather than blowing the whole thing away.
+      if (this.showingDetail) {
+        this.backToList();
+      } else {
+        this.closeApprovalModal();
+      }
+    },
+
     viewRequest(request) {
       this.selectedRequest = { ...request };
       this.showRejectionNote = false;
@@ -1133,7 +1193,7 @@ export default {
     async handleRequestAction(action) {
       if (!this.selectedRequest || this.processing) return;
 
-      if (this.selectedRequest.type !== 'leave' && this.selectedRequest.type !== 'overtime' && this.selectedRequest.type !== 'shift') {
+      if (!['leave', 'shift', 'timesheet'].includes(this.selectedRequest.type)) {
         this.showToast('This request type is not supported in dashboard', 'error');
         return;
       }
@@ -1153,10 +1213,10 @@ export default {
         let endpoint;
         if (this.selectedRequest.type === 'leave') {
           endpoint = `/user/dashboard/leaves/${this.selectedRequest.id}/${action}`;
-        } else if (this.selectedRequest.type === 'overtime') {
-          endpoint = `/user/dashboard/overtime/${this.selectedRequest.id}/${action}`;
         } else if (this.selectedRequest.type === 'shift') {
           endpoint = `/user/dashboard/shift-change/${this.selectedRequest.id}/${action}`;
+        } else if (this.selectedRequest.type === 'timesheet') {
+          endpoint = `/user/dashboard/timesheets/${this.selectedRequest.id}/${action}`;
         }
 
         await axios.post(endpoint, payload);
@@ -1168,8 +1228,8 @@ export default {
         const actionText = action === 'approve' ? 'approved' : 'rejected';
         const requestTypeLabels = {
           'leave': 'Leave',
-          'overtime': 'Overtime',
-          'shift': 'Shift change'
+          'shift': 'Shift change',
+          'timesheet': 'Timesheet'
         };
         const requestType = requestTypeLabels[this.selectedRequest.type] || 'Request';
         this.showToast(
@@ -1198,28 +1258,42 @@ export default {
     getRequestTypeLabel(type) {
       const labels = {
         'leave': 'Leave Request',
-        'overtime': 'Overtime Request', 
         'attendance': 'Attendance Correction',
-        'shift': 'Shift Change'
+        'shift': 'Shift Change',
+        'timesheet': 'Weekly Time Entries'
       };
       return labels[type] || 'Request';
     },
 
-    getRequestTypeBadgeClass(type) {
-      const classes = {
-        'leave': 'bg-blue-100 text-blue-800',
-        'overtime': 'bg-orange-100 text-orange-800',
-        'attendance': 'bg-green-100 text-green-800',
-        'shift': 'bg-purple-100 text-purple-800'
+    /** Decimal hours as H:MM, matching the Time Entries grid. */
+    formatSheetHours(value) {
+      const hours = Number(value || 0);
+      const whole = Math.floor(hours);
+      const minutes = Math.round((hours - whole) * 60);
+      return `${whole}:${String(minutes).padStart(2, '0')}`;
+    },
+
+    /** Literal classes so Tailwind's scanner compiles them. */
+    sheetTintClass(tint) {
+      const tints = {
+        green:  'bg-status-green text-status-text',
+        orange: 'bg-status-orange text-status-text',
+        purple: 'bg-status-purple text-status-text',
+        blue:   'bg-status-blue text-status-text',
+        yellow: 'bg-status-yellow text-status-text',
+        indigo: 'bg-status-indigo text-status-text',
+        cyan:   'bg-status-cyan text-status-text',
+        red:    'bg-status-red text-status-text',
+        gray:   'bg-status-gray text-status-text',
       };
-      return classes[type] || 'bg-gray-100 text-gray-800';
+      return tints[tint] || tints.gray;
     },
 
     getStatusBadgeClass(status) {
       const statusLower = (status || '').toLowerCase();
-      if (statusLower === 'approved') return 'bg-green-100 text-green-800';
-      if (statusLower === 'rejected') return 'bg-red-100 text-red-800';
-      return 'bg-yellow-100 text-yellow-800';
+      if (statusLower === 'approved') return 'bg-status-green text-status-text';
+      if (statusLower === 'rejected') return 'bg-status-red text-status-text';
+      return 'bg-status-yellow text-status-text';
     },
 
     showToast(message, type = 'info') {

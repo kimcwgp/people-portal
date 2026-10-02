@@ -133,11 +133,11 @@ class Attendance extends Model
         $timeIn = $this->time_in;
         $timeOut = $this->time_out;
 
-        $totalMinutes = $timeOut->diffInMinutes($timeIn);
+        $totalMinutes = $timeIn->diffInMinutes($timeOut);
 
         $breakMinutes = $this->breaks->sum(function ($break) {
             return $break->ended_at ?
-                $break->ended_at->diffInMinutes($break->started_at) : 0;
+                $break->started_at->diffInMinutes($break->ended_at) : 0;
         });
 
         $workingMinutes = $totalMinutes - $breakMinutes;
@@ -152,7 +152,7 @@ class Attendance extends Model
     {
         $totalBreakMinutes = $this->breaks->sum(function ($break) {
             return $break->ended_at ?
-                $break->ended_at->diffInMinutes($break->started_at) : 0;
+                $break->started_at->diffInMinutes($break->ended_at) : 0;
         });
 
         if ($totalBreakMinutes === 0) {

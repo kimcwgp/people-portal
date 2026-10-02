@@ -2,22 +2,19 @@
 
 namespace App\Services;
 
-use App\Models\{User, Attendance, AttendanceBreak, Leave, Overtime, ForApproval, ShiftChangeRequest, LeaveCredit};
-use App\Services\{BreakCalculationService, RingCentralService};
+use App\Models\{User, Attendance, AttendanceBreak, Leave, ForApproval, ShiftChangeRequest, LeaveCredit, Timesheet};
+use App\Http\Resources\TimeEntries\TimesheetResource;
+use App\Services\BreakCalculationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\{Log, DB};
 
 class AttendanceService
 {
     private BreakCalculationService $breakService;
-    private RingCentralService $ringCentral;
 
-    public function __construct(
-        BreakCalculationService $breakService,
-        RingCentralService $ringCentral
-    ) {
+    public function __construct(BreakCalculationService $breakService)
+    {
         $this->breakService = $breakService;
-        $this->ringCentral = $ringCentral;
     }
 
     /**
@@ -59,13 +56,6 @@ class AttendanceService
         $user->online = true;
         $user->save();
 
-        // Send notification
-        if (!empty($user->glip_url)) {
-            $this->ringCentral->sendAttendanceNotification(
-                $user, 'TIME IN', $now, $user->glip_url, $notes
-            );
-        }
-
         return [
             'message' => 'Successfully clocked in',
             'status' => 'TIME_IN',
@@ -93,13 +83,6 @@ class AttendanceService
 
         $user->online = false;
         $user->save();
-
-        // Send notification
-        if (!empty($user->glip_url)) {
-            $this->ringCentral->sendAttendanceNotification(
-                $user, 'TIME OUT', $now, $user->glip_url, $notes
-            );
-        }
 
         return [
             'message' => 'Successfully clocked out',
@@ -149,12 +132,6 @@ class AttendanceService
             $remaining = $this->breakService->getRemainingMinutesForType($attendance, $type, $now);
         }
         
-        if (!empty($user->glip_url)) {
-            $this->ringCentral->sendBreakNotification(
-                $user, $type, 'START', $now, $user->glip_url, $remaining, null, $notes
-            );
-        }
-
         $label = $config[$type]['label'] ?? ucfirst($type);
 
         return [
@@ -212,12 +189,6 @@ class AttendanceService
             $remaining = $this->breakService->getRemainingMinutesForType($attendance, $type, $now);
         }
         
-        if (!empty($user->glip_url)) {
-            $this->ringCentral->sendBreakNotification(
-                $user, $type, 'END', $now, $user->glip_url, $remaining, null, $endNotes
-            );
-        }
-
         $label = $config[$type]['label'] ?? ucfirst($type);
 
         return [
@@ -365,35 +336,6 @@ class AttendanceService
                     ];
                 });
 
-            // Get overtime requests for subordinates
-            $overtimeRequests = Overtime::with(['user', 'project'])
-                ->whereIn('user_id', $subordinateIds)
-                ->where('status', 'pending')
-                ->latest()
-                ->get()
-                ->map(function ($overtime) {
-                    $userName = $overtime->user->name ?? 'Unknown User';
-                    $userEmail = $overtime->user->email ?? '';
-
-                    return [
-                        'id' => $overtime->id,
-                        'type' => 'overtime',
-                        'status' => $overtime->status,
-                        'created_at' => $overtime->created_at,
-                        'user_id' => $overtime->user_id,
-                        'name' => $userName,
-                        'user_name' => $userName,
-                        'email' => $userEmail,
-                        'avatar' => $this->generateAvatar($userName),
-                        'user_avatar' => $this->generateAvatar($userName),
-                        'ot_date' => $overtime->ot_date ? Carbon::parse($overtime->ot_date)->format('M d, Y') : 'N/A',
-                        'time_in' => $overtime->time_in ? $overtime->time_in->format('H:i') : 'N/A',
-                        'time_out' => $overtime->time_out ? $overtime->time_out->format('H:i') : 'N/A',
-                        'project_name' => $overtime->project->project_name ?? 'No Project',
-                        'ot_hours' => $overtime->ot_hours ?? 0,
-                    ];
-                });
-
             // Get shift change requests for subordinates
             $shiftRequests = ShiftChangeRequest::with(['user', 'currentShift', 'requestedShift'])
                 ->whereIn('user_id', $subordinateIds)
@@ -427,11 +369,43 @@ class AttendanceService
                     ];
                 });
 
+            // Weekly timesheets awaiting this approver
+            $timesheetRequests = Timesheet::with(['user', 'approver', 'entries.project', 'entries.timeType'])
+                ->whereIn('user_id', $subordinateIds)
+                ->where('status', 'pending')
+                ->latest()
+                ->get()
+                ->map(function ($timesheet) {
+                    $userName = $timesheet->user->name ?? 'Unknown User';
+
+                    return [
+                        'id' => $timesheet->id,
+                        'type' => 'timesheet',
+                        'status' => $timesheet->status,
+                        'created_at' => $timesheet->submitted_at ?? $timesheet->created_at,
+                        'user_id' => $timesheet->user_id,
+                        'name' => $userName,
+                        'user_name' => $userName,
+                        'email' => $timesheet->user->email ?? '',
+                        'avatar' => $this->generateAvatar($userName),
+                        'user_avatar' => $this->generateAvatar($userName),
+                        'leave_type' => 'Weekly Time Entries',
+                        'start_date' => $timesheet->week_start?->format('M d, Y'),
+                        'end_date' => $timesheet->week_end?->format('M d, Y'),
+                        'week_label' => $timesheet->week_label,
+                        'total_hours' => $timesheet->total_hours,
+                        'duration' => $timesheet->total_hours . ' hrs',
+                        // Full week grid so the approver can review the lines
+                        // before signing off, not just a summary count.
+                        'timesheet_detail' => (new TimesheetResource($timesheet))->resolve(),
+                    ];
+                });
+
             // Convert to arrays before merging to avoid Collection issues
             $allRequests = array_merge(
                 $leaveRequests->toArray(),
-                $overtimeRequests->toArray(),
-                $shiftRequests->toArray()
+                $shiftRequests->toArray(),
+                $timesheetRequests->toArray()
             );
 
             // Sort by created_at descending
@@ -617,6 +591,12 @@ class AttendanceService
                     'vl_carried_over_used' => $leaveCredit->vl_carried_over_used ?? 0,
                     'vl_carried_over_remaining' => $leaveCredit->vl_carried_over_remaining ?? 0,
                     'birthday_leave_available' => $leaveCredit->birthday_leave_available ?? 0,
+                    'pto_remaining' => max(0, $leaveCredit->pto_remaining),
+                    'pto_credits' => $leaveCredit->pto_credits,
+                    'pto_used' => $leaveCredit->pto_used,
+                    'cto_remaining_hours' => max(0, $leaveCredit->cto_remaining_hours),
+                    'cto_hours' => $leaveCredit->cto_hours,
+                    'cto_used_hours' => $leaveCredit->cto_used_hours,
                 ];
             }
             
@@ -632,6 +612,12 @@ class AttendanceService
                 'vl_carried_over_used' => 0,
                 'vl_carried_over_remaining' => 0,
                 'birthday_leave_available' => 0,
+                'pto_remaining' => 0,
+                'pto_credits' => 0,
+                'pto_used' => 0,
+                'cto_remaining_hours' => 0,
+                'cto_hours' => 0,
+                'cto_used_hours' => 0,
             ];
             
         } catch (\Exception $e) {
@@ -666,25 +652,4 @@ class AttendanceService
         return $labels;
     }
 
-    public function sendLeaveApprovalNotification($leave, $action, $approver, $glipUrl, $rejectionNote = null)
-    {
-        try {
-            $this->ringCentral->sendLeaveApprovalNotification(
-                $leave, $action, $approver, $glipUrl, $rejectionNote
-            );
-        } catch (\Exception $e) {
-            Log::error('Failed to send leave approval notification: ' . $e->getMessage());
-        }
-    }
-
-    public function sendOvertimeApprovalNotification($overtime, $action, $approver, $glipUrl, $rejectionNote = null)
-    {
-        try {
-            $this->ringCentral->sendOvertimeApprovalNotification(
-                $overtime, $action, $approver, $glipUrl, $rejectionNote
-            );
-        } catch (\Exception $e) {
-            Log::error('Failed to send overtime approval notification: ' . $e->getMessage());
-        }
-    }
 }

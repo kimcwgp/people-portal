@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->time('corrected_time_in')->nullable();
             $table->time('corrected_time_out')->nullable();
+            $table->time('corrected_lunch_start')->nullable();
+            $table->time('corrected_lunch_end')->nullable();
             $table->text('reason');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->foreignId('approver_id')->nullable()->constrained('users')->onDelete('set null');

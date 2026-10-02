@@ -113,7 +113,7 @@ class EmployeeManagementController extends Controller
         return [
             'id' => $user->id,
             'name' => $user->name,
-            'employee_id' => $user->employee_id,
+            'employee_id' => $employee->employee_id,
             'employment_status' => $employee->employment_status ?? 'N/A',
             'date_hired' => $employee->hire_date?->format('Y-m-d'),
             'regularization_date' => $employee->regularization_date?->format('Y-m-d'),

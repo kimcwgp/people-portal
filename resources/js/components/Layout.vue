@@ -1,12 +1,12 @@
 <template>
-  <div class="flex h-screen bg-gray-100">
+  <div class="flex h-screen bg-canvas">
     <!-- Overlay (mobile) -->
-    <div v-if="isMobileMenuOpen" @click="toggleMobileMenu" class="fixed inset-0 bg-black/50 z-40 lg:hidden"/>
+    <div v-if="isMobileMenuOpen" @click="toggleMobileMenu" class="fixed inset-0 bg-text/40 z-40 lg:hidden"/>
 
     <!-- Sidebar -->
     <aside
       :class="[
-        'bg-white shadow-lg transition-all duration-300 z-50 flex flex-col h-full',
+        'bg-surface border-r border-border transition-all duration-300 z-50 flex flex-col h-full shrink-0',
         'overflow-x-hidden',
         isCollapsed ? 'lg:w-20' : 'lg:w-72',
         'lg:relative fixed inset-y-0 left-0',
@@ -14,31 +14,31 @@
       ]"
     >
       <!-- Sidebar header -->
-      <header class="p-4 border-b flex items-center justify-between">
+      <header class="p-4 border-b border-border flex items-center justify-between">
         <div v-if="!isCollapsed || isMobileMenuOpen" class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-full bg-text flex items-center justify-center">
             <span class="text-white font-semibold text-sm">{{ userInitials }}</span>
           </div>
           <div>
-            <p class="text-xs text-gray-500">Hello</p>
-            <p class="font-semibold text-gray-800 text-sm truncate max-w-[9rem]">{{ userName }}</p>
+            <p class="text-xs text-text-muted">Hello</p>
+            <p class="font-semibold text-text text-sm truncate max-w-[9rem]">{{ userName }}</p>
           </div>
         </div>
         <div v-else class="flex justify-center w-full">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+          <div class="w-10 h-10 rounded-full bg-text flex items-center justify-center">
             <span class="text-white font-semibold text-sm">{{ userInitials }}</span>
           </div>
         </div>
 
         <!-- Desktop collapse -->
-        <button @click="toggleSidebar" class="hidden lg:block p-2 rounded-lg hover:bg-gray-100">
-          <svg :class="['w-5 h-5 text-gray-600 transition-transform', isCollapsed ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button @click="toggleSidebar" class="hidden lg:block p-2 rounded-lg hover:bg-canvas">
+          <svg :class="['w-5 h-5 text-text-muted transition-transform', isCollapsed ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
         </button>
         <!-- Mobile close -->
-        <button @click="toggleMobileMenu" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
-          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button @click="toggleMobileMenu" class="lg:hidden p-2 rounded-lg hover:bg-canvas">
+          <svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
@@ -53,7 +53,7 @@
             :to="{ name: item.name }"
             :class="[
               'flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 group relative',
-              isActive(item.name) ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'
+              isActive(item.name) ? 'bg-accent text-text font-semibold' : 'text-text-muted hover:bg-canvas hover:text-text'
             ]"
             @click="handleMenuClick"
           >
@@ -63,7 +63,7 @@
             <!-- Tooltip when collapsed -->
             <div
               v-if="isCollapsed && !isMobileMenuOpen"
-              class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
+              class="absolute left-full ml-2 px-2 py-1 bg-text text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
             >
               {{ item.label }}
             </div>
@@ -75,7 +75,7 @@
               @click="toggleSubMenu(item.name)"
               :class="[
                 'cursor-pointer flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200',
-                'text-gray-600 hover:bg-gray-100'
+                'text-text-muted hover:bg-canvas hover:text-text'
               ]"
             >
               <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
@@ -97,7 +97,7 @@
                 :to="{ name: subItem.name }"
                 :class="[
                   'flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200',
-                  isActive(subItem.name) ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-600 hover:bg-gray-100'
+                  isActive(subItem.name) ? 'bg-accent text-text font-semibold' : 'text-text-muted hover:bg-canvas hover:text-text'
                 ]"
                 @click="handleMenuClick"
               >
@@ -110,10 +110,10 @@
       </nav>
 
       <!-- Logout Section -->
-      <div class="p-4 mt-auto border-t">
+      <div class="p-4 mt-auto border-t border-border">
         <button
           @click="showLogoutConfirmation = true"
-          class="flex items-center space-x-3 px-3 py-3 rounded-lg w-full text-gray-600 hover:bg-gray-100 group relative transition-all duration-200"
+          class="flex items-center space-x-3 px-3 py-3 rounded-lg w-full text-text-muted hover:bg-status-red hover:text-danger group relative transition-colors"
         >
           <component :is="'LogoutIcon'" class="w-5 h-5 flex-shrink-0" />
           <span v-if="!isCollapsed || isMobileMenuOpen" class="font-medium">LOGOUT</span>
@@ -121,7 +121,7 @@
           <!-- Tooltip when collapsed -->
           <div
             v-if="isCollapsed && !isMobileMenuOpen"
-            class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
+            class="absolute left-full ml-2 px-2 py-1 bg-text text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
           >
             LOGOUT
           </div>
@@ -130,15 +130,15 @@
     </aside>
 
     <!-- Main content -->
-    <main class="flex-1 flex flex-col min-h-0">
+    <main class="flex-1 flex flex-col min-h-0 min-w-0">
       <!-- Mobile header -->
-      <div class="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
-        <button @click="toggleMobileMenu" class="p-2 rounded-lg hover:bg-gray-100">
-          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="lg:hidden bg-surface border-b border-border p-4 flex items-center justify-between">
+        <button @click="toggleMobileMenu" class="p-2 rounded-lg hover:bg-canvas">
+          <svg class="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
         </button>
-        <h1 class="text-lg font-semibold text-gray-800 truncate">{{ currentTitle }}</h1>
+        <h1 class="text-lg font-semibold text-text truncate">{{ currentTitle }}</h1>
         <div class="w-6" />
       </div>
 
@@ -149,19 +149,19 @@
 
     <!-- Logout Modal -->
     <div v-if="showLogoutConfirmation" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="absolute inset-0 bg-black/50" @click="showLogoutConfirmation = false"></div>
-      <div class="relative bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+      <div class="absolute inset-0 bg-text/40" @click="showLogoutConfirmation = false"></div>
+      <div class="relative bg-surface rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <div class="text-center">
-          <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-16 h-16 mx-auto mb-4 bg-status-red rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Confirm Logout</h3>
-          <p class="text-gray-600 mb-6">Are you sure you want to logout? You will be redirected to the login page.</p>
+          <h3 class="text-lg font-semibold text-text mb-2">Confirm Logout</h3>
+          <p class="text-text-muted mb-6">Are you sure you want to logout? You will be redirected to the login page.</p>
           <div class="flex gap-3">
-            <button @click="showLogoutConfirmation = false" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl">Cancel</button>
-            <button @click="confirmLogout" class="flex-1 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-xl">Logout</button>
+            <button @click="showLogoutConfirmation = false" class="flex-1 px-4 py-2 text-text bg-surface-sunken border border-border hover:bg-canvas rounded-xl">Cancel</button>
+            <button @click="confirmLogout" class="flex-1 px-4 py-2 text-white bg-danger hover:bg-danger/90 rounded-xl">Logout</button>
           </div>
         </div>
       </div>
@@ -190,10 +190,9 @@ export default {
           label: 'MY RECORDS',
           icon: 'DetailsIcon',
           subItems: [
-            { name: 'attendance', label: 'MY ATTENDANCE', icon: 'AttendanceIcon', permission: 'view my attendance' },
-            { name: 'standup', label: 'MY STAND UP', icon: 'StandupIcon', permission: 'view my standups' },
-            { name: 'leaves', label: 'MY LEAVES', icon: 'LeavesIcon', permission: 'view my leaves' },
-            { name: 'overtime', label: 'MY OVERTIME', icon: 'OvertimeIcon', permission: 'view my overtime' },
+            { name: 'attendance', label: 'ATTENDANCE', icon: 'AttendanceIcon', permission: 'view my attendance' },
+            { name: 'time-entries', label: 'TIME ENTRIES', icon: 'TimeEntriesIcon', permission: 'view my time entries' },
+            { name: 'leaves', label: 'LEAVE REQUESTS', icon: 'LeavesIcon', permission: 'view my leaves' },
             { name: 'shift', label: 'MY SHIFT', icon: 'MyShiftIcon', permission: 'view my shift' },
           ]
         },
@@ -203,11 +202,10 @@ export default {
           label: 'MY TEAM',
           icon: 'TeamIcon',
           subItems: [
-            { name: 'team-attendance', label: 'MY TEAM\'S ATTENDANCE', icon: 'TeamAttendanceIcon', permission: 'view team attendance' },
-            { name: 'team-standup', label: 'MY TEAM\'S STAND UP', icon: 'TeamStandupIcon', permission: 'view team standups' },
-            { name: 'team-leaves', label: 'MY TEAM\'S LEAVES', icon: 'TeamLeavesIcon', permission: 'view team leaves' },
-            { name: 'team-overtime', label: 'MY TEAM\'S OVERTIME', icon: 'TeamOvertimeIcon', permission: 'view team overtime' },
-            { name: 'team-shift', label: 'MY TEAM\'S SHIFT', icon: 'TeamShiftIcon', permission: 'view team shift' },
+            { name: 'team-attendance', label: 'TEAM\'S ATTENDANCE', icon: 'TeamAttendanceIcon', permission: 'view team attendance' },
+            { name: 'team-time-entries', label: 'TEAM\'S TIME ENTRIES', icon: 'TeamTimeEntriesIcon', permission: 'view team time entries' },
+            { name: 'team-leaves', label: 'TEAM\'S LEAVES', icon: 'TeamLeavesIcon', permission: 'view team leaves' },
+            { name: 'team-shift', label: 'TEAM\'S SHIFT', icon: 'TeamShiftIcon', permission: 'view team shift' },
           ]
         },
 
@@ -221,10 +219,10 @@ export default {
             { name: 'hr-announcements', label: 'HR ANNOUNCEMENTS', icon: 'HrAnnouncementIcon', permission: 'view hr announcements' },
             { name: 'leave-credits', label: 'LEAVE CREDITS', icon: 'LeaveCreditsIcon', permission: 'view leave credits' },
             { name: 'employee-regularization', label: 'EMPLOYEE REGULARIZATION', icon: 'RegularizationIcon', permission: 'edit employee regularization' },
+            { name: 'holidays', label: 'HOLIDAYS', icon: 'HolidaysIcon', permission: 'create holidays' },
             { name: 'associate-logs', label: 'ASSOCIATE LOGS', icon: 'AssociateLogsIcon', permission: 'view associate logs' },
             { name: 'active-associates', label: 'ACTIVE ASSOCIATES', icon: 'ActiveAssociatesIcon', permission: 'view active associates' },
             { name: 'proxy-leaves', label: 'PROXY LEAVES', icon: 'ProxyLeavesIcon', permission: 'view proxy leaves' },
-            { name: 'proxy-overtime', label: 'PROXY OVERTIME', icon: 'ProxyOvertimeIcon', permission: 'view proxy overtime' },
             { name: 'proxy-attendance', label: 'PROXY ATTENDANCE', icon: 'ProxyAttendanceIcon', permission: 'view proxy attendance' },
           ]
         },
@@ -462,22 +460,16 @@ export default {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>`
     },
-    StandupIcon: {
+    TimeEntriesIcon: {
       template: `
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>`
     },
     LeavesIcon: {
       template: `
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>`
-    },
-    OvertimeIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>`
     },
     AssociateLogsIcon: {
@@ -505,10 +497,10 @@ export default {
           <circle cx="18" cy="6" r="3" fill="currentColor" opacity="0.3"/>
         </svg>`
     },
-    TeamStandupIcon: {
+    TeamTimeEntriesIcon: {
       template: `
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           <circle cx="19" cy="5" r="2" fill="currentColor" opacity="0.3"/>
         </svg>`
     },
@@ -517,13 +509,6 @@ export default {
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           <circle cx="18" cy="5" r="2" fill="currentColor" opacity="0.3"/>
-        </svg>`
-    },
-    TeamOvertimeIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          <circle cx="19" cy="4" r="2" fill="currentColor" opacity="0.3"/>
         </svg>`
     },
     TeamShiftIcon: {
@@ -562,6 +547,14 @@ export default {
         </svg>`
     },
 
+    HolidaysIcon: {
+      template: `
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l.7 1.5 1.6.2-1.2 1.1.3 1.6-1.4-.8-1.4.8.3-1.6-1.2-1.1 1.6-.2z"/>
+        </svg>`
+    },
+
     RegularizationIcon: {
       template: `
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,13 +571,6 @@ export default {
         </svg>`
     },
 
-    ProxyOvertimeIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" stroke="blue" d="M20 4l-4 4m0-4l4 4"/>
-        </svg>`
-    },
 
     ProxyAttendanceIcon: {
       template: `

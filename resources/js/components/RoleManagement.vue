@@ -1,342 +1,373 @@
 <template>
-  <div class="p-6 space-y-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Manage Roles</h1>
-      </div>
-      <button
-        @click="openCreateModal"
-        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
-      >
-        + ROLE
-      </button>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-      <div class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1">
-          <input
-            v-model="searchTerm"
-            @input="handleSearch"
-            type="text"
-            placeholder="Search role..."
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-600 whitespace-nowrap">Show:</label>
-          <select
-            v-model="perPage"
-            @change="changePerPage"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="10">10 per page</option>
-            <option value="25">25 per page</option>
-            <option value="50">50 per page</option>
-            <option value="100">100 per page</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-green-600 text-white">
-          <tr>
-            <th class="text-left p-4 font-semibold">ROLE NAME</th>
-            <th class="text-center p-4 font-semibold">ACTION</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200">
-          <tr v-for="role in roles" :key="role.id" class="hover:bg-gray-50">
-            <td class="p-4">
-              <div class="font-medium text-gray-900">{{ role.name }}</div>
-              <div class="text-sm text-gray-500">
-                {{ role.permissions_count || 0 }} permission(s) assigned
-              </div>
-            </td>
-            <td class="p-4 text-center">
-              <div class="flex justify-center space-x-2">
-                <button
-                  @click="editRole(role)"
-                  class="bg-green-600 text-white p-2 rounded hover:bg-green-700"
-                  title="Edit"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-                  </svg>
-                </button>
-                <button
-                  @click="viewRole(role)"
-                  class="bg-green-600 text-white p-2 rounded hover:bg-green-700"
-                  title="View"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-                  </svg>
-                </button>
-                <button
-                  @click="confirmDelete(role)"
-                  class="bg-red-600 text-white p-2 rounded hover:bg-red-700"
-                  title="Delete"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-if="loading" class="flex justify-center items-center py-12">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+  <div class="min-h-screen bg-canvas p-4">
+    <div class="mx-auto max-w-full px-2 sm:px-4 lg:px-6 xl:px-8">
+      <!-- Title bar, matching Attendance -->
+      <div class="mb-3 sm:mb-4 flex items-center justify-between gap-4 rounded-xl bg-surface px-4 py-3 shadow-sm sm:rounded-2xl sm:px-6">
+        <h1 class="text-xl font-bold text-text sm:text-2xl">Role Management</h1>
+        <button
+          @click="openCreateModal"
+          class="flex flex-shrink-0 items-center gap-2 rounded-lg bg-accent-solid px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Role
+        </button>
       </div>
 
-      <div v-if="!roles.length && !loading" class="text-center py-12">
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No roles found</h3>
-        <p class="mt-1 text-sm text-gray-500">
-          {{ searchTerm ? 'Try a different search term.' : 'Get started by creating a new role.' }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Pagination Controls -->
-    <div v-if="pagination.total > 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <!-- Results Info -->
-        <div class="text-sm text-gray-600">
-          Showing <span class="font-medium">{{ pagination.from }}</span> to 
-          <span class="font-medium">{{ pagination.to }}</span> of 
-          <span class="font-medium">{{ pagination.total }}</span> results
-        </div>
-
-        <!-- Page Navigation -->
-        <div class="flex items-center gap-2">
-          <!-- Previous Button -->
-          <button
-            @click="goToPage(pagination.current_page - 1)"
-            :disabled="pagination.current_page === 1"
-            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            :class="pagination.current_page === 1 ? 'bg-gray-100' : 'bg-white'"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-
-          <!-- Page Numbers -->
-          <div class="hidden sm:flex gap-1">
-            <button
-              v-for="page in visiblePages"
-              :key="page"
-              @click="page !== '...' && goToPage(page)"
-              :disabled="page === '...'"
-              class="min-w-[40px] px-3 py-2 border rounded-lg transition-colors"
-              :class="[
-                page === pagination.current_page
-                  ? 'bg-green-600 text-white border-green-600 font-medium'
-                  : page === '...'
-                  ? 'border-gray-300 cursor-default'
-                  : 'border-gray-300 hover:bg-gray-50'
-              ]"
-            >
-              {{ page }}
-            </button>
-          </div>
-
-          <!-- Mobile: Current Page Display -->
-          <div class="sm:hidden px-4 py-2 border border-gray-300 rounded-lg bg-white">
-            <span class="font-medium">{{ pagination.current_page }}</span>
-            <span class="text-gray-500"> / {{ pagination.last_page }}</span>
-          </div>
-
-          <!-- Next Button -->
-          <button
-            @click="goToPage(pagination.current_page + 1)"
-            :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            :class="pagination.current_page === pagination.last_page ? 'bg-gray-100' : 'bg-white'"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Create/Edit/View Modal -->
-    <div v-if="showCreateModal || showEditModal || showViewModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="absolute inset-0 bg-black/50" @click="closeModal"></div>
-      <div class="relative bg-white rounded-2xl p-6 max-w-6xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold text-gray-900">
-            {{ showViewModal ? 'VIEW ROLE' : showEditModal ? 'EDIT ROLE' : 'CREATE NEW ROLE' }}
-          </h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <div v-if="permissionsLoading" class="flex flex-col justify-center items-center py-20">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-          <p class="text-gray-600">Loading permissions...</p>
-        </div>
-
-        <form v-else @submit.prevent="saveRole" class="space-y-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">ROLE NAME</label>
+      <!-- Filters + results live in one card, as in Attendance -->
+      <div class="bg-surface rounded-lg shadow-sm border border-border overflow-hidden">
+        <!-- Notched-outline fields: the label sits on the border line.
+             shrink-0 keeps the set widths so they wrap instead of collapsing. -->
+        <div class="flex flex-wrap items-center gap-3 border-b border-border p-4">
+          <div class="relative w-full shrink-0 sm:w-72">
+            <label for="f-role-search" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Search</label>
             <input
-              v-model="roleForm.name"
+              id="f-role-search"
+              v-model="searchTerm"
+              @input="handleSearch"
               type="text"
-              :required="!showViewModal"
-              :readonly="showViewModal"
-              :class="[
-                'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-                showViewModal ? 'bg-gray-100 cursor-not-allowed' : ''
-              ]"
-              placeholder="Role Name"
+              placeholder="Role name"
+              class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text placeholder-text-subtle focus:border-accent focus:outline-none"
             >
-            <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name[0] }}</p>
           </div>
 
-          <div v-if="Object.keys(allPermissions).length > 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-blue-900">
-                  Selected: {{ roleForm.permissions.length }} / {{ totalPermissionsCount }} permissions
-                </p>
-                <p class="text-xs text-blue-700 mt-1">
-                  {{ Object.keys(allPermissions).length }} modules available
-                </p>
+          <div class="relative w-full shrink-0 sm:w-44">
+            <label for="f-role-per-page" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Show</label>
+            <select
+              id="f-role-per-page"
+              v-model="perPage"
+              @change="changePerPage"
+              class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none"
+            >
+              <option value="10">10 per page</option>
+              <option value="25">25 per page</option>
+              <option value="50">50 per page</option>
+              <option value="100">100 per page</option>
+            </select>
+          </div>
+
+          <button
+            v-if="searchTerm"
+            @click="searchTerm = ''; handleSearch()"
+            class="shrink-0 rounded-lg border border-border bg-surface-sunken px-5 py-2.5 text-sm font-medium text-text transition-colors hover:bg-canvas"
+          >
+            Clear
+          </button>
+        </div>
+
+        <!-- Results summary -->
+        <div v-if="!loading && roles.length > 0" class="border-b border-border px-4 py-2">
+          <p class="text-xs text-text-muted">
+            Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} roles
+          </p>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="flex justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        </div>
+
+        <!-- Empty -->
+        <div v-else-if="!roles.length" class="p-8 text-center">
+          <svg class="mx-auto h-12 w-12 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <h3 class="mt-3 text-lg font-semibold text-text">No roles found</h3>
+          <p class="mt-1 text-text-muted">
+            {{ searchTerm ? 'Try a different search term.' : 'Get started by creating a new role.' }}
+          </p>
+        </div>
+
+        <div v-else>
+          <!-- Desktop Table -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full min-w-[640px]">
+              <thead class="bg-surface-sunken border-b border-border">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Role Name</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Permissions</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr v-for="role in roles" :key="role.id" class="hover:bg-surface-sunken transition-colors">
+                  <td class="px-4 py-3">
+                    <p class="text-sm font-medium text-text">{{ role.name }}</p>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center whitespace-nowrap rounded-md bg-status-purple px-2 py-1 text-xs font-medium text-status-text">
+                      {{ role.permissions_count || 0 }} permission{{ (role.permissions_count || 0) === 1 ? '' : 's' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center justify-center gap-2">
+                      <button @click="viewRole(role)" class="p-1.5 text-accent-solid hover:bg-accent-subtle rounded transition-colors" title="View">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                      </button>
+                      <button @click="editRole(role)" class="p-1.5 text-accent-solid hover:bg-accent-subtle rounded transition-colors" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                      </button>
+                      <button @click="confirmDelete(role)" class="p-1.5 text-danger hover:bg-status-red rounded transition-colors" title="Delete">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Cards -->
+          <div class="lg:hidden divide-y divide-border">
+            <div v-for="role in roles" :key="role.id" class="p-4 hover:bg-surface-sunken transition-colors">
+              <div class="mb-3 flex items-start justify-between gap-3">
+                <p class="text-sm font-medium text-text">{{ role.name }}</p>
+                <span class="inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-md bg-status-purple px-2 py-1 text-xs font-medium text-status-text">
+                  {{ role.permissions_count || 0 }} permission{{ (role.permissions_count || 0) === 1 ? '' : 's' }}
+                </span>
               </div>
+              <div class="flex gap-2">
+                <button @click="viewRole(role)" class="flex-1 rounded-lg border border-border bg-surface-sunken px-3 py-2 text-sm font-medium text-text transition-colors hover:bg-canvas">View</button>
+                <button @click="editRole(role)" class="flex-1 rounded-lg bg-accent-solid px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover">Edit</button>
+                <button @click="confirmDelete(role)" class="flex-1 rounded-lg bg-danger px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-danger/90">Delete</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination sits inside the same card as the table -->
+          <div v-if="pagination.total > 0" class="border-t border-border px-4 py-3">
+            <div class="flex items-center justify-between sm:hidden">
               <button
-                v-if="!showViewModal"
-                type="button"
-                @click="toggleAllPermissions"
-                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                @click="goToPage(pagination.current_page - 1)"
+                :disabled="pagination.current_page <= 1"
+                class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {{ roleForm.permissions.length === totalPermissionsCount ? 'Deselect All' : 'Select All' }}
+                Previous
+              </button>
+              <span class="text-sm text-text">Page {{ pagination.current_page }} of {{ pagination.last_page }}</span>
+              <button
+                @click="goToPage(pagination.current_page + 1)"
+                :disabled="pagination.current_page >= pagination.last_page"
+                class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+
+            <div class="hidden sm:flex sm:flex-col sm:space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+              <div class="flex items-center text-sm text-text">
+                <span>Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} results</span>
+              </div>
+
+              <div class="flex items-center space-x-1">
+                <button
+                  @click="goToPage(pagination.current_page - 1)"
+                  :disabled="pagination.current_page <= 1"
+                  class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+
+                <button
+                  v-for="page in visiblePages"
+                  :key="page"
+                  @click="page !== '...' && goToPage(page)"
+                  :disabled="page === '...'"
+                  class="min-w-[40px] rounded-md border px-3 py-2 text-sm font-medium transition-colors"
+                  :class="page === pagination.current_page
+                    ? 'bg-accent-solid border-accent-solid text-white'
+                    : page === '...'
+                      ? 'border-transparent text-text-muted cursor-default'
+                      : 'border-border bg-surface text-text-muted hover:bg-surface-sunken'"
+                >
+                  {{ page }}
+                </button>
+
+                <button
+                  @click="goToPage(pagination.current_page + 1)"
+                  :disabled="pagination.current_page >= pagination.last_page"
+                  class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create/Edit/View Modal -->
+      <div v-if="showCreateModal || showEditModal || showViewModal" class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="absolute inset-0 bg-black/50" @click="closeModal"></div>
+        <div class="relative bg-surface rounded-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+          <div class="p-6 border-b border-border">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-semibold text-text">
+                {{ showViewModal ? 'View Role' : showEditModal ? 'Edit Role' : 'Create New Role' }}
+              </h3>
+              <button @click="closeModal" class="p-2 rounded-lg hover:bg-surface-sunken">
+                <svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
           </div>
 
-          <div class="space-y-4">
-            <label class="block text-sm font-medium text-gray-700 mb-4">PERMISSIONS BY MODULE</label>
-            
-            <div v-for="(moduleData, moduleName) in allPermissions" :key="moduleName" 
-                 class="border border-gray-200 rounded-lg overflow-hidden">
-              <div class="bg-gradient-to-r from-green-50 to-green-100 px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <h4 class="font-semibold text-gray-900 text-sm uppercase">{{ moduleName }}</h4>
-                  <span class="text-xs bg-white px-2 py-1 rounded-full text-gray-600">
-                    {{ moduleData.permissions.length }} permissions
-                  </span>
-                </div>
-                <button
-                  v-if="!showViewModal"
-                  type="button"
-                  @click="toggleModulePermissions(moduleName)"
-                  class="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          <div v-if="permissionsLoading" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
+            <p class="text-text-muted">Loading permissions...</p>
+          </div>
+
+          <template v-else>
+            <form id="role-form" @submit.prevent="saveRole" class="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-220px)]">
+              <div>
+                <label class="block text-sm font-medium text-text mb-2">Role Name *</label>
+                <input
+                  v-model="roleForm.name"
+                  type="text"
+                  :required="!showViewModal"
+                  :readonly="showViewModal"
+                  class="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition-all duration-200"
+                  :class="showViewModal ? 'bg-surface-sunken cursor-not-allowed' : ''"
+                  placeholder="Role Name"
                 >
-                  {{ isModuleFullySelected(moduleName) ? 'Deselect All' : 'Select All' }}
-                </button>
+                <p v-if="errors.name" class="mt-1 text-sm text-danger">{{ errors.name[0] }}</p>
               </div>
 
-              <div class="p-4 bg-white">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  <label
-                    v-for="permission in moduleData.permissions"
-                    :key="permission.name"
-                    :class="[
-                      'flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all',
-                      roleForm.permissions.includes(permission.name)
-                        ? 'bg-green-50 border-green-300'
-                        : 'bg-gray-50 border-gray-200 hover:border-gray-300',
-                      showViewModal ? 'cursor-not-allowed opacity-60' : ''
-                    ]"
+              <div v-if="Object.keys(allPermissions).length > 0" class="rounded-xl bg-accent-subtle p-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-medium text-text">
+                      Selected: {{ roleForm.permissions.length }} / {{ totalPermissionsCount }} permissions
+                    </p>
+                    <p class="mt-1 text-xs text-text-muted">
+                      {{ Object.keys(allPermissions).length }} modules available
+                    </p>
+                  </div>
+                  <button
+                    v-if="!showViewModal"
+                    type="button"
+                    @click="toggleAllPermissions"
+                    class="rounded-lg bg-accent-solid px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
                   >
-                    <input
-                      type="checkbox"
-                      :value="permission.name"
-                      v-model="roleForm.permissions"
-                      :disabled="showViewModal"
-                      class="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                    <span class="text-sm font-medium" :class="getActionColor(permission.action)">
-                      {{ formatPermissionName(permission.name) }}
-                    </span>
-                  </label>
+                    {{ roleForm.permissions.length === totalPermissionsCount ? 'Deselect All' : 'Select All' }}
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div v-if="Object.keys(allPermissions).length === 0 && !permissionsLoading" 
-                 class="text-center py-12 bg-gray-50 rounded-lg">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">No permissions available</h3>
-              <p class="mt-1 text-sm text-gray-500">Please run the permissions seeder first.</p>
-            </div>
-          </div>
+              <div class="space-y-4">
+                <label class="block text-sm font-medium text-text">Permissions by Module</label>
 
-          <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
-            <button
-              v-if="!showViewModal"
-              type="submit"
-              :disabled="roleLoading || !roleForm.name.trim()"
-              class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
-            >
-              <div v-if="roleLoading" class="flex items-center justify-center">
-                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Saving...
+                <div v-for="(moduleData, moduleName) in allPermissions" :key="moduleName"
+                     class="overflow-hidden rounded-xl border border-border">
+                  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface-sunken px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <h4 class="text-sm font-semibold uppercase text-text">{{ moduleName }}</h4>
+                      <span class="rounded-full bg-surface px-2 py-1 text-xs text-text-muted">
+                        {{ moduleData.permissions.length }} permissions
+                      </span>
+                    </div>
+                    <button
+                      v-if="!showViewModal"
+                      type="button"
+                      @click="toggleModulePermissions(moduleName)"
+                      class="rounded-lg bg-accent-solid px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-hover"
+                    >
+                      {{ isModuleFullySelected(moduleName) ? 'Deselect All' : 'Select All' }}
+                    </button>
+                  </div>
+
+                  <div class="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <label
+                      v-for="permission in moduleData.permissions"
+                      :key="permission.name"
+                      class="flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors"
+                      :class="[
+                        roleForm.permissions.includes(permission.name)
+                          ? 'border-accent bg-accent-subtle'
+                          : 'border-border bg-surface-sunken hover:border-border-strong',
+                        showViewModal ? 'cursor-not-allowed opacity-60' : ''
+                      ]"
+                    >
+                      <input
+                        type="checkbox"
+                        :value="permission.name"
+                        v-model="roleForm.permissions"
+                        :disabled="showViewModal"
+                        class="h-4 w-4 flex-shrink-0 rounded border-border text-accent-solid focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                      <span class="text-sm font-medium" :class="getActionColor(permission.action)">
+                        {{ formatPermissionName(permission.name) }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div v-if="Object.keys(allPermissions).length === 0" class="rounded-xl bg-surface-sunken py-12 text-center">
+                  <svg class="mx-auto h-12 w-12 text-text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  <h3 class="mt-3 text-lg font-semibold text-text">No permissions available</h3>
+                  <p class="mt-1 text-text-muted">Please run the permissions seeder first.</p>
+                </div>
               </div>
-              <span v-else>{{ showEditModal ? 'UPDATE ROLE' : 'CREATE ROLE' }}</span>
-            </button>
-            <button
-              type="button"
-              @click="closeModal"
-              class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {{ showViewModal ? 'CLOSE' : 'CANCEL' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            </form>
 
-    <!-- Delete Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="absolute inset-0 bg-black/50" @click="showDeleteModal = false"></div>
-      <div class="relative bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-        <h3 class="text-xl font-semibold text-gray-900 mb-4">Delete Role</h3>
-        <p class="text-gray-600 mb-6">
-          Are you sure you want to delete the role "{{ roleToDelete?.name }}"? This action cannot be undone.
-        </p>
-        <div class="flex gap-3">
-          <button
-            @click="showDeleteModal = false"
-            class="flex-1 px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg"
-          >
-            Cancel
-          </button>
-          <button
-            @click="deleteRole"
-            class="flex-1 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg"
-          >
-            Delete
-          </button>
+            <div class="flex flex-col gap-3 border-t border-border p-6 sm:flex-row">
+              <button
+                type="button"
+                @click="closeModal"
+                class="flex-1 rounded-xl border border-border bg-surface-sunken px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-canvas"
+              >
+                {{ showViewModal ? 'Close' : 'Cancel' }}
+              </button>
+              <button
+                v-if="!showViewModal"
+                type="submit"
+                form="role-form"
+                :disabled="roleLoading || !roleForm.name.trim()"
+                class="flex-1 rounded-xl bg-accent-solid px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="roleLoading" class="flex items-center justify-center gap-2">
+                  <span class="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></span>
+                  Saving...
+                </span>
+                <span v-else>{{ showEditModal ? 'Update Role' : 'Create Role' }}</span>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Delete Modal -->
+      <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="absolute inset-0 bg-black/50" @click="showDeleteModal = false"></div>
+        <div class="relative bg-surface rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+          <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 bg-status-red rounded-full flex items-center justify-center">
+              <svg class="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-text mb-2">Delete Role</h3>
+            <p class="text-text-muted mb-6">
+              Are you sure you want to delete the role &ldquo;{{ roleToDelete?.name }}&rdquo;? This action cannot be undone.
+            </p>
+            <div class="flex gap-3">
+              <button @click="showDeleteModal = false" class="flex-1 px-4 py-2 text-text bg-surface-sunken border border-border hover:bg-canvas rounded-xl">Cancel</button>
+              <button @click="deleteRole" class="flex-1 px-4 py-2 text-white bg-danger hover:bg-danger/90 rounded-xl">Delete</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
@@ -601,15 +632,13 @@ export default {
     }
 
     const getActionColor = (action) => {
+      // Destructive actions read danger, everything else stays in the
+      // neutral ink so the permission grid does not turn into a rainbow.
       const colors = {
-        'view': 'text-blue-700',
-        'create': 'text-green-700',
-        'edit': 'text-yellow-700',
-        'delete': 'text-red-700',
-        'cancel': 'text-orange-700',
-        'export': 'text-purple-700'
+        'delete': 'text-danger',
+        'cancel': 'text-danger',
       }
-      return colors[action] || 'text-gray-700'
+      return colors[action] || 'text-text'
     }
 
 

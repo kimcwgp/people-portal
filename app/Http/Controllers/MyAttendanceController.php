@@ -7,7 +7,6 @@ use App\Http\Resources\AttendanceResource;
 use App\Models\Attendance;
 use App\Models\AttendanceCorrection;
 use App\Models\Leave;
-use App\Services\RingCentralService;
 use App\Traits\HasPagination;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{DB, Log, Auth};
@@ -211,16 +210,6 @@ class MyAttendanceController extends Controller
             });
 
             $correction->load(['attendance', 'attendance.breaks']);
-
-            $supervisor = $user->immediateSupervisor;
-            if ($supervisor && $supervisor->glip_url) {
-                $ringCentral = app(RingCentralService::class);
-                $ringCentral->sendAttendanceCorrectionRequestNotification(
-                    $correction,
-                    $user,
-                    $supervisor->glip_url
-                );
-            }
 
             return response()->json([
                 'success' => true,

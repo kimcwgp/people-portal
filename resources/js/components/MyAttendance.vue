@@ -1,120 +1,102 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-4">
+  <div class="min-h-screen bg-canvas p-4">
     <div class="mx-auto max-w-full px-2 sm:px-4 lg:px-6 xl:px-8">
-      <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">My Attendance</h1>
+      <div class="mb-3 sm:mb-4 flex items-center justify-between rounded-xl bg-surface px-4 py-3 shadow-sm sm:rounded-2xl sm:px-6">
+        <h1 class="text-xl font-bold text-text sm:text-2xl">Attendance</h1>
       </div>
       
-      <!-- Enhanced Filters Section -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div class="lg:col-span-2">
-            <div class="flex items-center gap-3">
-              <label class="text-sm font-medium text-gray-700">Date Range:</label>
-              <input 
-                type="date" 
-                v-model="filters.startDate"
-                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-              >
-              <span class="text-gray-400">to</span>
-              <input 
-                type="date" 
-                v-model="filters.endDate"
-                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-              >
+      <!-- Filters + results live in one card, as in the reference -->
+      <div class="bg-surface rounded-lg shadow-sm border border-border overflow-hidden">
+        <div class="flex flex-col gap-4 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
+          <!-- Notched-outline fields: the label sits on the border line -->
+          <div class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-3xl">
+            <div class="relative">
+              <label for="f-date" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Date</label>
+              <div id="f-date" class="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 focus-within:border-accent">
+                <input type="date" v-model="filters.startDate"
+                       class="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none">
+                <span class="text-text-subtle">&ndash;</span>
+                <input type="date" v-model="filters.endDate"
+                       class="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none">
+              </div>
+            </div>
+
+            <div class="relative">
+              <label for="f-month" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Month</label>
+              <select id="f-month" v-model="filters.month"
+                      class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none">
+                <option value="">All</option>
+                <option v-for="month in months" :key="month.value" :value="month.value">{{ month.label }}</option>
+              </select>
+            </div>
+
+            <div class="relative">
+              <label for="f-page" class="absolute -top-2 left-2.5 z-10 bg-surface px-1 text-xs text-text-muted">Page</label>
+              <select id="f-page" v-model="selectedPerPage" @change="changePerPage"
+                      class="w-full rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none">
+                <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
+              </select>
             </div>
           </div>
 
-          <div>
-            <select 
-              v-model="filters.month" 
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Months</option>
-              <option v-for="month in months" :key="month.value" :value="month.value">
-                {{ month.label }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <select 
-              v-model="selectedPerPage" 
-              @change="changePerPage"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option v-for="option in perPageOptions" :key="option" :value="option">
-                {{ option }} per page
-              </option>
-            </select>
-          </div>
-
-          <div class="flex space-x-2">
-            <button
-              @click="applyFilters"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex-1 sm:flex-none"
-            >
+          <div class="flex gap-2">
+            <button @click="applyFilters"
+                    class="flex-1 rounded-lg bg-accent-solid px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover lg:flex-none">
               Filter
             </button>
-            <button
-              @click="clearFilters"
-              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex-1 sm:flex-none"
-            >
+            <button @click="clearFilters"
+                    class="flex-1 rounded-lg border border-border bg-surface-sunken px-5 py-2.5 text-sm font-medium text-text transition-colors hover:bg-canvas lg:flex-none">
               Clear
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Results Summary -->
-      <div v-if="!loading && attendances.length > 0" class="mb-4">
-        <p class="text-sm text-gray-600">
-          Showing {{ pagination?.from || 0 }} to {{ pagination?.to || 0 }} of {{ pagination?.total || 0 }} attendance records
-        </p>
-      </div>
+        <!-- Results summary -->
+        <div v-if="!loading && attendances.length > 0" class="border-b border-border px-4 py-2">
+          <p class="text-xs text-text-muted">
+            Showing {{ pagination?.from || 0 }} to {{ pagination?.to || 0 }} of {{ pagination?.total || 0 }} records
+          </p>
+        </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+        <!-- Loading -->
+        <div v-if="loading" class="flex justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        </div>
 
-      <!-- Empty State -->
-      <div v-else-if="attendances.length === 0" class="rounded-lg bg-white p-8 shadow-sm text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <h3 class="mt-3 text-lg font-semibold text-gray-900">No attendance records found</h3>
-        <p class="mt-1 text-gray-600">
-          {{ hasActiveFilters ? 'Try adjusting your filters or date range' : 'No attendance records found' }}
-        </p>
-      </div>
+        <!-- Empty -->
+        <div v-else-if="attendances.length === 0" class="p-8 text-center">
+          <svg class="mx-auto h-12 w-12 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3 class="mt-3 text-lg font-semibold text-text">No attendance records found</h3>
+          <p class="mt-1 text-text-muted">
+            {{ hasActiveFilters ? 'Try adjusting your filters or date range' : 'No attendance records found' }}
+          </p>
+        </div>
 
       <!-- Attendance Table -->
-      <div v-else class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div v-else>
         <!-- Desktop Table -->
         <div class="hidden lg:block overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
+            <thead class="bg-surface-sunken border-b border-border">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time In/Out</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Working Hours</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Break Hours</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lunch Break</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Notes</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Date</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Time In / Time Out</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Working Hours</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-border">
               <tr 
                 v-for="attendance in attendances" 
                 :key="attendance.id || attendance.attendance_date"
-                class="hover:bg-gray-50 transition-colors"
+                class="hover:bg-surface-sunken transition-colors"
               >
                 <td class="px-4 py-3">
-                  <p class="text-sm font-semibold text-gray-900">{{ formatDay(attendance.attendance_date) }}</p>
-                  <p class="text-xs text-gray-500">{{ formatDate(attendance.attendance_date) }}</p>
+                  <p class="text-sm font-semibold text-text">{{ formatDay(attendance.attendance_date) }}</p>
+                  <p class="text-xs text-text-muted">{{ formatDate(attendance.attendance_date) }}</p>
                 </td>
                 <td class="px-4 py-3">
                   <span 
@@ -124,23 +106,23 @@
                   >
                     {{ getStatusLabel(attendance) }}
                   </span>
-                  <span v-else class="text-sm text-gray-400">-</span>
+                  <span v-else class="text-sm text-text-subtle">-</span>
                 </td>
                 <td class="px-4 py-3">
                   <!-- Multiple sessions display -->
                   <div v-if="attendance.sessions && attendance.sessions.length > 1" class="space-y-1">
                     <div v-for="(session, index) in attendance.sessions" :key="index" class="text-sm">
-                      <span class="text-gray-900">{{ getTimeDisplay(session.time_in) }}</span>
-                      <span class="text-gray-500 mx-1">/</span>
-                      <span class="text-gray-900">{{ getTimeDisplay(session.time_out) }}</span>
+                      <span class="text-text">{{ getTimeDisplay(session.time_in) }}</span>
+                      <span class="text-text-muted mx-1">/</span>
+                      <span class="text-text">{{ getTimeDisplay(session.time_out) }}</span>
                     </div>
                   </div>
                   <!-- Single session display -->
                   <div v-else>
-                    <p class="text-sm text-gray-900">
+                    <p class="text-sm text-text">
                       {{ getTimeDisplay(attendance.time_in) }}
                     </p>
-                    <p class="text-sm text-gray-900">
+                    <p class="text-sm text-text">
                       {{ getTimeDisplay(attendance.time_out) }}
                     </p>
                   </div>
@@ -148,48 +130,14 @@
                 <td class="px-4 py-3">
                   <!-- Multiple sessions working hours -->
                   <div v-if="attendance.sessions && attendance.sessions.length > 1" class="space-y-1">
-                    <p v-for="(session, index) in attendance.sessions" :key="index" class="text-sm font-semibold text-gray-900">
+                    <p v-for="(session, index) in attendance.sessions" :key="index" class="text-sm font-semibold text-text">
                       {{ session.working_hours || '--:--' }}
                     </p>
                   </div>
                   <!-- Single session -->
-                  <p v-else class="text-sm font-semibold text-gray-900">{{ attendance.working_hours || '--:--' }}</p>
+                  <p v-else class="text-sm font-semibold text-text">{{ attendance.working_hours || '--:--' }}</p>
                 </td>
-                <td class="px-4 py-3">
-                  <!-- Multiple sessions break hours -->
-                  <div v-if="attendance.sessions && attendance.sessions.length > 1" class="space-y-1">
-                    <p v-for="(session, index) in attendance.sessions" :key="index" class="text-sm font-semibold text-gray-900">
-                      {{ getBreakTimesDisplay(session) }}
-                    </p>
-                  </div>
-                  <!-- Single session -->
-                  <p v-else class="text-sm font-semibold text-gray-900">
-                    {{ getBreakTimesDisplay(attendance) }}
-                  </p>
-                </td>
-                <td class="px-4 py-3">
-                  <!-- Multiple sessions lunch break -->
-                  <div v-if="attendance.sessions && attendance.sessions.length > 1" class="space-y-1">
-                    <p v-for="(session, index) in attendance.sessions" :key="index" class="text-sm text-gray-900">
-                      {{ getLunchTimesDisplay(session) }}
-                    </p>
-                  </div>
-                  <!-- Single session -->
-                  <p v-else class="text-sm text-gray-900">{{ getLunchTimesDisplay(attendance) }}</p>
-                </td>
-                <td class="px-4 py-3 max-w-xs">
-                  <p class="text-sm text-gray-900 line-clamp-2">{{ attendance.notes || 'No notes' }}</p>
-                  <button 
-                    v-if="attendance.leave_info?.has_attachment"
-                    @click="viewAttachment(attendance.leave_info.attachment_url)" 
-                    class="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                    </svg>
-                    View Certificate
-                  </button>
-                </td>
+
                 <td class="px-4 py-3">
                   <!-- Multiple sessions actions -->
                   <div v-if="attendance.sessions && attendance.sessions.length > 1" class="space-y-1">
@@ -208,8 +156,8 @@
                         class="p-1.5 rounded transition-colors"
                         :class="[
                           (session.correction?.status === 'pending' || session.correction?.status === 'approved')
-                            ? 'text-gray-400 cursor-not-allowed'
-                            : 'text-blue-600 hover:bg-blue-50'
+                            ? 'text-text-subtle cursor-not-allowed'
+                            : 'text-accent-solid hover:bg-accent-subtle'
                         ]"
                         :title="getCorrectionButtonText(session)"
                       >
@@ -217,7 +165,7 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
                       </button>
-                      <span v-else-if="!canRequestCorrection(session)" class="text-xs text-gray-400">-</span>
+                      <span v-else-if="!canRequestCorrection(session)" class="text-xs text-text-subtle">-</span>
                     </div>
                   </div>
                   <!-- Single session actions -->
@@ -236,8 +184,8 @@
                       class="p-1.5 rounded transition-colors"
                       :class="[
                         (attendance.correction?.status === 'pending' || attendance.correction?.status === 'approved')
-                          ? 'text-gray-400 cursor-not-allowed'
-                          : 'text-blue-600 hover:bg-blue-50'
+                          ? 'text-text-subtle cursor-not-allowed'
+                          : 'text-accent-solid hover:bg-accent-subtle'
                       ]"
                       :title="getCorrectionButtonText(attendance)"
                     >
@@ -245,7 +193,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                       </svg>
                     </button>
-                    <span v-else-if="!canRequestCorrection(attendance)" class="text-xs text-gray-400">-</span>
+                    <span v-else-if="!canRequestCorrection(attendance)" class="text-xs text-text-subtle">-</span>
                   </div>
                 </td>
               </tr>
@@ -254,17 +202,17 @@
         </div>
 
         <!-- Mobile Cards -->
-        <div class="lg:hidden divide-y divide-gray-200">
+        <div class="lg:hidden divide-y divide-border">
           <div
             v-for="attendance in attendances"
             :key="attendance.id || attendance.attendance_date"
-            class="p-4 hover:bg-gray-50 transition-colors"
+            class="p-4 hover:bg-surface-sunken transition-colors"
           >
             <!-- Header -->
             <div class="flex items-start justify-between mb-3">
               <div>
-                <p class="text-sm font-semibold text-gray-900">{{ formatDay(attendance.attendance_date) }}</p>
-                <p class="text-xs text-gray-500">{{ formatDate(attendance.attendance_date) }}</p>
+                <p class="text-sm font-semibold text-text">{{ formatDay(attendance.attendance_date) }}</p>
+                <p class="text-xs text-text-muted">{{ formatDate(attendance.attendance_date) }}</p>
               </div>
               <span 
                 v-if="getStatusLabel(attendance)" 
@@ -278,61 +226,33 @@
             <!-- Details -->
             <div class="space-y-2 mb-3">
               <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Time In/Out:</span>
+                <span class="text-text-muted">Time In/Out:</span>
                 <!-- Multiple sessions display -->
                 <div v-if="attendance.sessions && attendance.sessions.length > 1" class="text-right space-y-1">
-                  <div v-for="(session, index) in attendance.sessions" :key="index" class="font-medium text-gray-900">
+                  <div v-for="(session, index) in attendance.sessions" :key="index" class="font-medium text-text">
                     {{ getTimeDisplay(session.time_in) }} / {{ getTimeDisplay(session.time_out) }}
                   </div>
                 </div>
                 <!-- Single session display -->
-                <span v-else class="font-medium text-gray-900">
+                <span v-else class="font-medium text-text">
                   {{ getTimeDisplay(attendance.time_in) }} / {{ getTimeDisplay(attendance.time_out) }}
                 </span>
               </div>
               <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Working Hours:</span>
+                <span class="text-text-muted">Working Hours:</span>
                 <!-- Multiple sessions display -->
                 <div v-if="attendance.sessions && attendance.sessions.length > 1" class="text-right space-y-1">
-                  <div v-for="(session, index) in attendance.sessions" :key="index" class="font-medium text-gray-900">
+                  <div v-for="(session, index) in attendance.sessions" :key="index" class="font-medium text-text">
                     {{ session.working_hours || '--:--' }}
                   </div>
                 </div>
                 <!-- Single session -->
-                <span v-else class="font-medium text-gray-900">{{ attendance.working_hours || '--:--' }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Break Hours:</span>
-                <!-- Multiple sessions display -->
-                <div v-if="attendance.sessions && attendance.sessions.length > 1" class="text-right space-y-1">
-                  <div v-for="(session, index) in attendance.sessions" :key="index" class="font-medium text-gray-900">
-                    {{ getBreakTimesDisplay(session) }}
-                  </div>
-                </div>
-                <!-- Single session -->
-                <span v-else class="font-medium text-gray-900">
-                  {{ getBreakTimesDisplay(attendance) }}
-                </span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Lunch Break:</span>
-                <!-- Multiple sessions display -->
-                <div v-if="attendance.sessions && attendance.sessions.length > 1" class="text-right space-y-1">
-                  <div v-for="(session, index) in attendance.sessions" :key="index" class="font-medium text-gray-900">
-                    {{ getLunchTimesDisplay(session) }}
-                  </div>
-                </div>
-                <!-- Single session -->
-                <span v-else class="font-medium text-gray-900">{{ getLunchTimesDisplay(attendance) }}</span>
-              </div>
-              <div class="text-sm">
-                <span class="text-gray-500">Notes:</span>
-                <p class="text-gray-900 mt-1">{{ attendance.notes || 'No notes' }}</p>
+                <span v-else class="font-medium text-text">{{ attendance.working_hours || '--:--' }}</span>
               </div>
               <div v-if="attendance.leave_info?.has_attachment">
                 <button 
                   @click="viewAttachment(attendance.leave_info.attachment_url)" 
-                  class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                  class="inline-flex items-center gap-1 text-xs text-accent-solid hover:text-accent-hover"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
@@ -344,10 +264,10 @@
 
             <!-- Actions -->
             <!-- Multiple sessions actions -->
-            <div v-if="attendance.sessions && attendance.sessions.length > 1" class="pt-3 border-t border-gray-200 space-y-2">
+            <div v-if="attendance.sessions && attendance.sessions.length > 1" class="pt-3 border-t border-border space-y-2">
               <div v-for="(session, index) in attendance.sessions" :key="index">
                 <div v-if="canRequestCorrection(session)" class="flex items-center justify-between">
-                  <span class="text-xs text-gray-500">Session {{ index + 1 }}:</span>
+                  <span class="text-xs text-text-muted">Session {{ index + 1 }}:</span>
                   <div class="flex items-center gap-2">
                     <span
                       v-if="session.correction?.status"
@@ -362,8 +282,8 @@
                       class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
                       :class="[
                         (session.correction?.status === 'pending' || session.correction?.status === 'approved')
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          ? 'bg-surface-sunken text-text-subtle cursor-not-allowed'
+                          : 'bg-accent-solid text-white hover:bg-accent-hover'
                       ]"
                     >
                       {{ getCorrectionButtonText(session) }}
@@ -373,7 +293,7 @@
               </div>
             </div>
             <!-- Single session actions -->
-            <div v-else-if="canRequestCorrection(attendance)" class="pt-3 border-t border-gray-200">
+            <div v-else-if="canRequestCorrection(attendance)" class="pt-3 border-t border-border">
               <div class="flex items-center justify-between">
                 <span
                   v-if="attendance.correction?.status"
@@ -388,8 +308,8 @@
                   class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
                   :class="[
                     (attendance.correction?.status === 'pending' || attendance.correction?.status === 'approved')
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'bg-surface-sunken text-text-subtle cursor-not-allowed'
+                      : 'bg-accent-solid text-white hover:bg-accent-hover'
                   ]"
                 >
                   {{ getCorrectionButtonText(attendance) }}
@@ -399,34 +319,35 @@
           </div>
         </div>
       </div>
+      </div><!-- /filters + table card -->
 
       <!-- Pagination -->
       <div v-if="pagination && pagination.total > pagination.per_page" class="mt-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-4">
+        <div class="bg-surface rounded-lg shadow-sm border border-border px-4 py-4">
           <div class="flex items-center justify-between sm:hidden">
             <button
               @click="changePage(pagination.current_page - 1)"
               :disabled="pagination.current_page <= 1"
-              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
             </button>
             
-            <span class="text-sm text-gray-700 font-medium">
+            <span class="text-sm text-text font-medium">
               Page {{ pagination.current_page }} of {{ pagination.last_page }}
             </span>
             
             <button
               @click="changePage(pagination.current_page + 1)"
               :disabled="pagination.current_page >= pagination.last_page"
-              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
             </button>
           </div>
 
           <div class="hidden sm:flex sm:flex-col sm:space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-            <div class="flex items-center text-sm text-gray-700">
+            <div class="flex items-center text-sm text-text">
               <span>Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} results</span>
             </div>
             
@@ -434,7 +355,7 @@
               <button
                 @click="changePage(pagination.current_page - 1)"
                 :disabled="pagination.current_page <= 1"
-                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
@@ -448,10 +369,10 @@
                   :class="[
                     'px-3 py-2 text-sm font-medium rounded-md transition-colors',
                     page === pagination.current_page
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-accent text-text'
                       : page === '...'
-                        ? 'text-gray-400 cursor-default'
-                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        ? 'text-text-subtle cursor-default'
+                        : 'text-text bg-surface border border-border hover:bg-surface-sunken'
                   ]"
                 >
                   {{ page }}
@@ -461,7 +382,7 @@
               <button
                 @click="changePage(pagination.current_page + 1)"
                 :disabled="pagination.current_page >= pagination.last_page"
-                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-2 text-sm font-medium text-text-muted bg-surface border border-border rounded-md hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
@@ -472,14 +393,15 @@
     </div>
 
     <!-- Correction Request Modal -->
-    <div v-if="showCorrectionModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-100">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-semibold text-gray-900">Request Attendance Correction</h2>
+    <div v-if="showCorrectionModal" class="fixed inset-0 bg-text/40 flex items-center justify-center p-4 z-50">
+      <div class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-surface shadow-2xl">
+        <div class="h-1 flex-shrink-0 bg-accent"></div>
+        <div class="p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-semibold text-text sm:text-lg">Request Attendance Correction</h2>
             <button
               @click="closeCorrectionModal"
-              class="text-gray-400 hover:text-gray-600 transition-colors"
+              class="text-text-subtle hover:text-text-muted transition-colors"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -487,8 +409,8 @@
             </button>
           </div>
 
-          <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-            <p class="text-sm text-blue-800">
+          <div class="mb-5 rounded-lg border border-border bg-surface-sunken px-4 py-3">
+            <p class="text-sm text-text">
               <strong>Date:</strong> {{ formatDate(selectedAttendance?.attendance_date) }}
             </p>
           </div>
@@ -496,76 +418,44 @@
           <form @submit.prevent="submitCorrection" class="space-y-6">
             <!-- Current Times Display -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="p-4 bg-gray-50 rounded-lg">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Current Time In</label>
-                <p class="text-lg font-semibold text-gray-900">{{ getTimeDisplay(selectedAttendance?.time_in) }}</p>
+              <div class="rounded-lg border border-border bg-surface-sunken px-4 py-3">
+                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-text-muted">Current Time In</label>
+                <p class="text-base font-semibold text-text">{{ getTimeDisplay(selectedAttendance?.time_in) }}</p>
               </div>
-              <div class="p-4 bg-gray-50 rounded-lg">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Current Time Out</label>
-                <p class="text-lg font-semibold text-gray-900">{{ getTimeDisplay(selectedAttendance?.time_out) }}</p>
-              </div>
-            </div>
-
-            <!-- Current Lunch Break Times Display -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="p-4 bg-gray-50 rounded-lg">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Current Lunch Start</label>
-                <p class="text-lg font-semibold text-gray-900">{{ getTimeDisplay(selectedAttendance?.lunch_start) }}</p>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-lg">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Current Lunch End</label>
-                <p class="text-lg font-semibold text-gray-900">{{ getTimeDisplay(selectedAttendance?.lunch_end) }}</p>
+              <div class="rounded-lg border border-border bg-surface-sunken px-4 py-3">
+                <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-text-muted">Current Time Out</label>
+                <p class="text-base font-semibold text-text">{{ getTimeDisplay(selectedAttendance?.time_out) }}</p>
               </div>
             </div>
 
             <!-- Requested Times -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Requested Time In *</label>
+                <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-text-muted">Requested Time In *</label>
                 <input
                   type="time"
                   v-model="correctionForm.corrected_time_in"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none"
                 >
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Requested Time Out *</label>
+                <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-text-muted">Requested Time Out *</label>
                 <input
                   type="time"
                   v-model="correctionForm.corrected_time_out"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-              </div>
-            </div>
-
-            <!-- Requested Lunch Break Times -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Requested Lunch Start</label>
-                <input
-                  type="time"
-                  v-model="correctionForm.corrected_lunch_start"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Requested Lunch End</label>
-                <input
-                  type="time"
-                  v-model="correctionForm.corrected_lunch_end"
-                  class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none"
                 >
               </div>
             </div>
 
             <!-- Reason -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Correction *</label>
+              <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-text-muted">Reason for correction *</label>
               <textarea
                 v-model="correctionForm.reason"
                 rows="4"
                 required
-                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                class="w-full border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:border-accent focus:outline-none resize-none"
                 placeholder="Please explain why you need this correction..."
               ></textarea>
             </div>
@@ -575,14 +465,14 @@
               <button
                 type="button"
                 @click="closeCorrectionModal"
-                class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                class="rounded-lg border border-border bg-surface-sunken px-4 py-2 text-sm font-medium text-text transition-colors hover:bg-canvas"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 :disabled="submitting"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                class="bg-accent-solid hover:bg-accent-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 <svg v-if="submitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -674,10 +564,10 @@ export default {
 
     getCorrectionStatusClass(status) {
       switch (status) {
-        case 'pending':  return 'bg-yellow-100 text-yellow-800';
-        case 'approved': return 'bg-green-100 text-green-800';
-        case 'rejected': return 'bg-red-100 text-red-800';
-        default:         return 'bg-gray-100 text-gray-800';
+        case 'pending':  return 'bg-status-yellow text-status-text';
+        case 'approved': return 'bg-status-green text-status-text';
+        case 'rejected': return 'bg-status-red text-status-text';
+        default:         return 'bg-surface-sunken text-text';
       }
     },
 
@@ -691,31 +581,31 @@ export default {
 
     getStatusClass(attendance) {
       if (attendance.is_on_leave && !attendance.is_partial_leave) {
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-status-purple text-status-text';
       }
       if (attendance.is_partial_leave) {
-        return 'bg-indigo-100 text-indigo-800';
+        return 'bg-status-indigo text-status-text';
       }
       if (attendance.is_weekend) {
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-sunken text-text';
       }
       if (attendance.is_awol) {
-        return 'bg-red-100 text-red-800';
+        return 'bg-status-red text-status-text';
       }
       
       switch (attendance.status) {
         case 'complete':
-          return 'bg-green-100 text-green-800';
+          return 'bg-status-green text-status-text';
         case 'partial':
-          return 'bg-yellow-100 text-yellow-800';
+          return 'bg-status-yellow text-status-text';
         case 'active':
-          return 'bg-blue-100 text-blue-800';
+          return 'bg-status-blue text-status-text';
         case 'undertime':
-          return 'bg-orange-100 text-orange-800';
+          return 'bg-status-orange text-status-text';
         case 'absent':
-          return 'bg-red-100 text-red-800';
+          return 'bg-status-red text-status-text';
         default:
-          return 'bg-gray-100 text-gray-800';
+          return 'bg-surface-sunken text-text';
       }
     },
 
@@ -751,7 +641,7 @@ export default {
 
     getBreakHoursClass(breakHours) {
       if (!breakHours || breakHours === '--:--') {
-        return 'text-gray-400';
+        return 'text-text-subtle';
       }
       
       const hoursMatch = breakHours.match(/(\d+)h/);
@@ -762,32 +652,14 @@ export default {
       const totalMinutes = (hours * 60) + minutes;
       
       if (totalMinutes > 90) {
-        return 'text-orange-600 font-medium';
+        return 'text-warning font-medium';
       } else if (totalMinutes > 60) {
-        return 'text-yellow-600 font-medium';
+        return 'text-warning font-medium';
       } else if (totalMinutes > 0) {
-        return 'text-green-600';
+        return 'text-success';
       }
       
-      return 'text-gray-400';
-    },
-
-    getLunchTimesDisplay(attendance) {
-      if (attendance.lunch_start && attendance.lunch_end) {
-        return `${attendance.lunch_start} - ${attendance.lunch_end}`;
-      }
-      return '--:--';
-    },
-
-    getBreakTimesDisplay(attendance) {
-      if (!attendance.breaks || attendance.breaks.length === 0) {
-        return '--:--';
-      }
-      
-      return attendance.breaks.map(brk => {
-        const end = brk.end || 'ongoing';
-        return `${brk.start} - ${end}`;
-      }).join(', ');
+      return 'text-text-subtle';
     },
 
     canRequestCorrection(attendance) {
@@ -1038,9 +910,9 @@ export default {
     showToast(message, type = 'info') {
       const toast = document.createElement('div');
       toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 transition-all duration-300 ${
-        type === 'success' ? 'bg-green-500' :
-        type === 'error'   ? 'bg-red-500'   :
-        type === 'warning' ? 'bg-yellow-500': 'bg-blue-500'
+        type === 'success' ? 'bg-success' :
+        type === 'error'   ? 'bg-danger'  :
+        type === 'warning' ? 'bg-warning' : 'bg-accent-solid'
       }`;
       toast.textContent = message;
       document.body.appendChild(toast);

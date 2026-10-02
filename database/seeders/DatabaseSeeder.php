@@ -2,26 +2,39 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * The baseline every environment needs: roles and permissions, the reference
+ * lists other modules select from, and the accounts you sign in with.
+ *
+ * This is deliberately free of demo data, so it is safe to run anywhere.
+ *
+ *   php artisan migrate:fresh --seed              schema + baseline
+ *   php artisan db:seed --class=SampleDataSeeder  demo data, on top
+ */
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
-    public function run()
+    public function run(): void
     {
         $this->call([
             TeamSeeder::class,
             RolePermissionSeeder::class,
             TestUserSeeder::class,
+
+            // Reference lists the app cannot function without
             LeaveTypeSeeder::class,
+            ProjectTypeSeeder::class,
+            TimeTypeSeeder::class,
+            HolidaySeeder::class,
             PositionSeeder::class,
             UserPositionSeeder::class,
             ClientSeeder::class,
             UserClientSeeder::class,
         ]);
+
+        $this->command->newLine();
+        $this->command->info('✅ Baseline seeded. Add demo data with:');
+        $this->command->line('   php artisan db:seed --class=SampleDataSeeder');
     }
 }

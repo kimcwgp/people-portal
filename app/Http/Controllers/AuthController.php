@@ -9,17 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\{DB, Mail, Log, Auth, Hash};
 use Illuminate\Http\JsonResponse;
-use App\Services\RingCentralService;
 
 class AuthController extends Controller
 {
-    private RingCentralService $ringCentral;
-
-    public function __construct()
-    {
-        $this->ringCentral = new RingCentralService();
-    }
-
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -85,7 +77,6 @@ class AuthController extends Controller
                 ], 404);
             }
 
-            $glipUrl = $user->glip_url;
             $token = hash('sha256', Str::random(60) . $user->id . microtime());
             DB::table('login_tokens')->updateOrInsert(
                 ['email' => $request->email],
@@ -107,9 +98,6 @@ class AuthController extends Controller
             }
 
             Mail::to($request->email)->send(new LoginLinkMail($loginLink, $user->name));
-            if ($glipUrl) {
-                $this->ringCentral->sendLoginNotification($request->email, $loginLink, $glipUrl);
-            }
 
             return response()->json([
                 'success' => true,

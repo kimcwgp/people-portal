@@ -60,8 +60,8 @@ class ProfileResource extends JsonResource
             ),
             
             // Computed values
-            'status_label' => $this->status ? 'Active' : 'Inactive',
-            'online_label' => $this->online ? 'Online' : 'Offline',
+            'employment_status_label' => $this->employee?->employment_status ?: 'Not Set',
+            'leave_scheme_label' => $this->formatLeaveSchemeLabel(),
             'employment_type_label' => $this->formatEmploymentTypeLabel(),
             'position_label' => $this->currentJobInformation?->position_name ?: 'No Position Assigned',
             'initials' => $this->generateInitials(),
@@ -114,6 +114,17 @@ class ProfileResource extends JsonResource
             'career_band' => $job?->career_band,
             'career_zone' => $job?->career_zone,
         ];
+    }
+
+    /**
+     * Regular staff get the full annual leave grant up front; everyone else
+     * accrues it monthly. See LeaveCreditSeeder for the same rule.
+     */
+    private function formatLeaveSchemeLabel(): string
+    {
+        return $this->employee?->employment_status === 'Regular'
+            ? 'Leave Type - Fixed'
+            : 'Leave Type - Accrual';
     }
 
     /**
