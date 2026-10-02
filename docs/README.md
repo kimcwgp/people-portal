@@ -1,7 +1,6 @@
 # People Portal documentation
 
-Module guides and release notes. Each guide is a PDF with its HTML source kept
-alongside it, so a doc can be edited and re-rendered rather than rewritten.
+Module guides and release notes, one PDF each.
 
 ## Module guides
 
@@ -21,8 +20,16 @@ alongside it, so a doc can be edited and re-rendered rather than rewritten.
 |---|---|
 | `Change-Log.pdf` | Everything changed in the current round of work, plus known issues still open |
 
-## Re-rendering a guide
+## Editing a guide
 
-The `.source.html` files are self-contained — open one in a browser to read it,
-or print it to PDF at Letter size with 0.55in top / 0.6in bottom / 0.7in side
-margins to regenerate the matching `.pdf`.
+These are PDFs only. Each was rendered from a self-contained HTML source that
+is no longer kept in the tree, but is still in git history:
+
+```bash
+git show 7661725:docs/Profile-Guide.source.html > Profile-Guide.source.html
+```
+
+Edit that file, then print it to PDF from a browser at Letter size with
+0.55in top / 0.6in bottom / 0.7in side margins to match the existing layout.
+
+Nothing here is served to the web — `docs/` sits outside `public/`.
