@@ -127,24 +127,6 @@
           <p v-if="errors.status && !viewOnly" class="text-red-500 text-sm mt-1">{{ errors.status[0] }}</p>
         </div>
 
-        <!-- Glip URL -->
-        <div v-if="form.glip_url || !viewOnly">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Glip URL</label>
-          <div v-if="viewOnly && form.glip_url" class="text-sm text-gray-900">
-            <a :href="form.glip_url" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">
-              {{ form.glip_url }}
-            </a>
-          </div>
-          <input
-            v-else-if="!viewOnly"
-            v-model="form.glip_url"
-            type="url"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter glip URL"
-          >
-          <p v-if="errors.glip_url && !viewOnly" class="text-red-500 text-sm mt-1">{{ errors.glip_url[0] }}</p>
-        </div>
-
         <!-- Actions -->
         <div class="flex gap-3 pt-4">
           <button
@@ -219,7 +201,6 @@ export default {
       name: '',
       email: '',
       password: '',
-      glip_url: '',
       team_id: '',
       team_name: '', // For display in view mode
       roles: [],
@@ -233,7 +214,6 @@ export default {
       form.name = ''
       form.email = ''
       form.password = ''
-      form.glip_url = ''
       form.team_id = ''
       form.team_name = ''
       form.roles = []
@@ -246,7 +226,6 @@ export default {
         form.name = user.name || ''
         form.email = user.email || ''
         form.password = '' // Always empty for security
-        form.glip_url = user.glip_url || ''
         form.team_id = user.team_id || ''
         form.team_name = user.team?.name || '' // For view mode display
         form.roles = user.roles?.map(role => role.name) || []

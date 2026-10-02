@@ -65,7 +65,6 @@ class SampleUserSeeder extends Seeder
                 [
                     'name' => $account['name'],
                     'password' => bcrypt($password),
-                    'glip_url' => 'https://app.glip.com/r/' . str_replace('.', '-', explode('@', $account['email'])[0]),
                     'team_id' => $team->id,
                     'shift_id' => $shift->id,
                     'immediate_sup_id' => $supervisor?->id,

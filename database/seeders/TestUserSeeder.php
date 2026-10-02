@@ -39,7 +39,6 @@ class TestUserSeeder extends Seeder
                 [
                     'name' => $account['name'],
                     'password' => bcrypt($password),
-                    'glip_url' => null,
                     'team_id' => $account['team']->id,
                     'shift_id' => $shift->id,
                     'immediate_sup_id' => $account['reportsTo']

@@ -35,8 +35,4 @@ return [
         ],
     ],
 
-    'ringcentral' => [
-        'team_attendance_webhook' => env('RINGCENTRAL_TEAM_ATTENDANCE_WEBHOOK'),
-    ],
-
 ];
