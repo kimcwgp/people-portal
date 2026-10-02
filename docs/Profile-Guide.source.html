@@ -1,0 +1,201 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Profile — How It Works</title>
+<style>
+  :root{
+    --gold:#c6973d; --gold-deep:#876729;
+    --ink:#090838; --ink-mid:#6c6c8a; --ink-line:#c1c2cf; --ink-wash:#ececfa;
+    --card:#fcfcfc;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);
+       font-size:10.2pt; line-height:1.55; margin:0;}
+  h1{font-size:25pt;margin:0 0 4px;letter-spacing:-.4px}
+  h2{font-size:14pt;margin:26px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--gold);
+     page-break-after:avoid; letter-spacing:-.2px}
+  h3{font-size:11pt;margin:18px 0 6px;page-break-after:avoid}
+  p{margin:0 0 9px}
+  code{font-family:"SFMono-Regular",Consolas,monospace;font-size:8.8pt;
+       background:var(--ink-wash);padding:1px 4px;border-radius:3px}
+  .page{padding:0 0 2px}
+  .note,.grid-demo,ul{page-break-inside:avoid}
+
+  .cover{height:9.3in;display:flex;flex-direction:column;justify-content:center;
+         padding:0 .3in;page-break-after:always}
+  .rule{width:70px;height:5px;background:var(--gold);margin:16px 0 20px;border-radius:3px}
+  .sub{font-size:13pt;color:var(--ink-mid);margin:0 0 30px}
+  .meta{font-size:9pt;color:var(--ink-mid);border-top:1px solid var(--ink-line);padding-top:14px;margin-top:34px}
+  .toc{margin-top:26px}
+  .toc div{padding:5px 0;border-bottom:1px solid var(--ink-wash);font-size:10.5pt}
+  .toc span{color:var(--gold-deep);font-weight:700;display:inline-block;width:26px}
+
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:9pt}
+  th{background:var(--ink-wash);text-align:left;padding:6px 8px;font-size:7.8pt;
+     text-transform:uppercase;letter-spacing:.5px;color:var(--ink-mid);
+     border-bottom:1px solid var(--ink-line)}
+  td{padding:6px 8px;border-bottom:1px solid var(--ink-wash);vertical-align:top}
+  td code{background:none;padding:0}
+  tr{page-break-inside:avoid}
+  thead{page-break-after:avoid}
+  /* keep a section label, its lead-in line and the table head together */
+  .kicker{page-break-after:avoid}
+  .block{page-break-inside:avoid}
+  h3{page-break-after:avoid}
+
+  .note{background:var(--ink-wash);border-left:3px solid var(--gold);
+        padding:9px 12px;margin:12px 0;border-radius:0 4px 4px 0;font-size:9.4pt}
+  .note b{color:var(--gold-deep)}
+
+  .flow{display:flex;align-items:center;gap:7px;margin:12px 0 16px;flex-wrap:wrap}
+  .st{padding:5px 11px;border-radius:14px;font-size:8.6pt;font-weight:700;
+      text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+  .arrow{color:var(--ink-mid);font-size:11pt}
+  .draft{background:#e5e5ee;color:var(--ink)}
+  .pend{background:#fdf3c8;color:var(--ink)}
+  .appr{background:#cfead3;color:var(--ink)}
+  .rej{background:#f8d2d4;color:var(--ink)}
+
+  .grid-demo{font-size:8pt;border:1px solid var(--ink-line);border-radius:5px;overflow:hidden;margin:10px 0 14px}
+  .grid-demo table{margin:0;font-size:8pt}
+  .grid-demo th{text-align:center}
+  .grid-demo th:first-child,.grid-demo td:first-child{text-align:left}
+  .grid-demo td{text-align:center}
+  .tt{padding:1px 6px;border-radius:3px;font-size:7.4pt;white-space:nowrap}
+
+  .two{display:flex;gap:16px}
+  .two>div{flex:1}
+  .kicker{font-size:7.8pt;text-transform:uppercase;letter-spacing:.8px;
+          color:var(--gold-deep);font-weight:700;margin-bottom:3px}
+  ul{margin:0 0 10px;padding-left:17px}
+  li{margin-bottom:4px}
+  .foot{position:running(footer)}
+</style></head><body>
+
+</head><body>
+
+<div class="cover">
+  <div class="kicker">People Portal &middot; Module Guide</div>
+  <h1>Profile</h1>
+  <div class="rule"></div>
+  <p class="sub">What the page shows, where each field comes<br>from, and what an associate may change.</p>
+
+  <div class="toc">
+    <div><span>1</span> What the module is</div>
+    <div><span>2</span> The screen</div>
+    <div><span>3</span> Where each field comes from</div>
+    <div><span>4</span> Editing your profile</div>
+    <div><span>5</span> Data model</div>
+    <div><span>6</span> API reference</div>
+    <div><span>7</span> Permissions</div>
+  </div>
+
+  <div class="meta">People Portal module documentation &middot; generated 2 October 2026</div>
+</div>
+
+<div class="page">
+
+<h2 style="margin-top:0">1 &nbsp;What the module is</h2>
+<p><b>Profile</b> is the single page where an associate sees everything the company
+records about them, and the only place they can correct their own personal details.
+It is deliberately read-mostly: employment facts such as hire date, employment status
+and reporting line are owned by HR and shown here without an edit control.</p>
+
+<div class="note"><b>Who sees it.</b> Every role. <code>view profile</code> is granted to
+Super Admin, Admin, HR, Manager, Team Lead and Employee alike, so Profile is the one
+module no role is ever without.</div>
+
+<h2>2 &nbsp;The screen</h2>
+<p>The page opens with a title bar carrying the heading and a single
+<b>Edit Profile</b> button, then a stack of cards:</p>
+<table>
+  <thead><tr><th style="width:27%">Card</th><th>Holds</th></tr></thead>
+  <tbody>
+    <tr><td>Identity header</td><td>Avatar initials, full name, email, role chips</td></tr>
+    <tr><td>Employment</td><td>Employee ID, hire date, employment status, employment type, shift, team, immediate supervisor</td></tr>
+    <tr><td>Leave scheme</td><td>Whether leave is granted up front or accrued monthly</td></tr>
+    <tr><td>Personal information</td><td>Birth date, gender, marital status, contact numbers, addresses</td></tr>
+    <tr><td>Emergency contact</td><td>Name, number, relationship</td></tr>
+    <tr><td>Government IDs</td><td>TIN, SSS, PhilHealth, Pag-IBIG</td></tr>
+  </tbody>
+</table>
+
+<h2>3 &nbsp;Where each field comes from</h2>
+<p>Profile is a join across five tables, not one. That matters when a field looks
+blank: the row may simply not exist yet for that user.</p>
+<table>
+  <thead><tr><th style="width:30%">Table</th><th>Supplies</th></tr></thead>
+  <tbody>
+    <tr><td><code>users</code></td><td>Name, email, status, team, shift, supervisor</td></tr>
+    <tr><td><code>employees</code></td><td>Employee ID, hire date, regularization date, employee status, employment type, employment status</td></tr>
+    <tr><td><code>personal_information</code></td><td>Birth date, gender, marital status, contacts, addresses, government IDs</td></tr>
+    <tr><td><code>job_information</code></td><td>Position name and level, career band and zone</td></tr>
+    <tr><td><code>salary_information</code></td><td>Never surfaced on Profile &mdash; kept in a separate table precisely so it is not</td></tr>
+  </tbody>
+</table>
+
+<h3>The leave scheme label</h3>
+<p>This is derived, not stored. <code>ProfileResource</code> reads the employee's
+<code>employment_status</code> and reports:</p>
+<table>
+  <thead><tr><th style="width:30%">Employment status</th><th>Label shown</th></tr></thead>
+  <tbody>
+    <tr><td>Regular</td><td>Leave Type &mdash; Fixed</td></tr>
+    <tr><td>Anything else</td><td>Leave Type &mdash; Accrual</td></tr>
+  </tbody>
+</table>
+<div class="note"><b>Keep these in step.</b> The same rule is applied independently by
+<code>LeaveCreditSeeder</code> when it grants the year's credits. Change one and the other
+has to follow, or the label will contradict the credits on Leave Requests.</div>
+
+<h2>4 &nbsp;Editing your profile</h2>
+<p><b>Edit Profile</b> opens a modal over the page. Only the personal and emergency
+contact blocks are editable; employment fields are rendered but disabled. Saving issues a
+single <code>PUT /api/user/profile</code>, and the page re-reads itself from the response
+rather than patching state locally, so what you see after saving is what the server stored.</p>
+<ul>
+  <li>Validation is server-side; field errors come back as a 422 and are shown inline.</li>
+  <li>There is no approval step &mdash; a personal detail change is live immediately.</li>
+  <li>Changing employment facts is HR's job, through <b>User Management</b> and
+      <b>Employee Regularization</b>, not here.</li>
+</ul>
+
+<h2>5 &nbsp;Data model</h2>
+<div class="block">
+<div class="kicker">employees</div>
+<table>
+  <thead><tr><th style="width:34%">Column</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>user_id</code></td><td>Unique; one employee row per user</td></tr>
+    <tr><td><code>employee_id</code></td><td>Unique human-facing staff number</td></tr>
+    <tr><td><code>hire_date</code>, <code>regularization_date</code></td><td>Dates, nullable</td></tr>
+    <tr><td><code>employee_status</code></td><td>active / inactive / terminated / resigned</td></tr>
+    <tr><td><code>employment_type</code></td><td>full_time / part_time / contract / intern / consultant</td></tr>
+    <tr><td><code>employment_status</code></td><td>Probationary / Regular / Resigned &mdash; drives the leave scheme</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>6 &nbsp;API reference</h2>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:49%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/user/profile</code></td><td><code>view profile</code></td></tr>
+    <tr><td>PUT</td><td><code>/api/user/profile</code></td><td><code>edit profile</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/profile/associate-logs/download/{log}</code></td><td><code>view profile</code></td></tr>
+  </tbody>
+</table>
+<p>The third route lets an associate download a document HR filed against them under
+<b>Associate Logs</b> &mdash; it is scoped to the signed-in user, so one associate cannot
+reach another's file by guessing an ID.</p>
+
+<h2>7 &nbsp;Permissions</h2>
+<table>
+  <thead><tr><th style="width:34%">Permission</th><th>Held by</th></tr></thead>
+  <tbody>
+    <tr><td><code>view profile</code></td><td>All six roles</td></tr>
+    <tr><td><code>edit profile</code></td><td>All six roles</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+</body></html>

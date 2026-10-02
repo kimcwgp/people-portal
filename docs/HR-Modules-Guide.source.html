@@ -1,0 +1,270 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>HR Modules — How It Works</title>
+<style>
+  :root{
+    --gold:#c6973d; --gold-deep:#876729;
+    --ink:#090838; --ink-mid:#6c6c8a; --ink-line:#c1c2cf; --ink-wash:#ececfa;
+    --card:#fcfcfc;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);
+       font-size:10.2pt; line-height:1.55; margin:0;}
+  h1{font-size:25pt;margin:0 0 4px;letter-spacing:-.4px}
+  h2{font-size:14pt;margin:26px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--gold);
+     page-break-after:avoid; letter-spacing:-.2px}
+  h3{font-size:11pt;margin:18px 0 6px;page-break-after:avoid}
+  p{margin:0 0 9px}
+  code{font-family:"SFMono-Regular",Consolas,monospace;font-size:8.8pt;
+       background:var(--ink-wash);padding:1px 4px;border-radius:3px}
+  .page{padding:0 0 2px}
+  .note,.grid-demo,ul{page-break-inside:avoid}
+
+  .cover{height:9.3in;display:flex;flex-direction:column;justify-content:center;
+         padding:0 .3in;page-break-after:always}
+  .rule{width:70px;height:5px;background:var(--gold);margin:16px 0 20px;border-radius:3px}
+  .sub{font-size:13pt;color:var(--ink-mid);margin:0 0 30px}
+  .meta{font-size:9pt;color:var(--ink-mid);border-top:1px solid var(--ink-line);padding-top:14px;margin-top:34px}
+  .toc{margin-top:26px}
+  .toc div{padding:5px 0;border-bottom:1px solid var(--ink-wash);font-size:10.5pt}
+  .toc span{color:var(--gold-deep);font-weight:700;display:inline-block;width:26px}
+
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:9pt}
+  th{background:var(--ink-wash);text-align:left;padding:6px 8px;font-size:7.8pt;
+     text-transform:uppercase;letter-spacing:.5px;color:var(--ink-mid);
+     border-bottom:1px solid var(--ink-line)}
+  td{padding:6px 8px;border-bottom:1px solid var(--ink-wash);vertical-align:top}
+  td code{background:none;padding:0}
+  tr{page-break-inside:avoid}
+  thead{page-break-after:avoid}
+  /* keep a section label, its lead-in line and the table head together */
+  .kicker{page-break-after:avoid}
+  .block{page-break-inside:avoid}
+  h3{page-break-after:avoid}
+
+  .note{background:var(--ink-wash);border-left:3px solid var(--gold);
+        padding:9px 12px;margin:12px 0;border-radius:0 4px 4px 0;font-size:9.4pt}
+  .note b{color:var(--gold-deep)}
+
+  .flow{display:flex;align-items:center;gap:7px;margin:12px 0 16px;flex-wrap:wrap}
+  .st{padding:5px 11px;border-radius:14px;font-size:8.6pt;font-weight:700;
+      text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+  .arrow{color:var(--ink-mid);font-size:11pt}
+  .draft{background:#e5e5ee;color:var(--ink)}
+  .pend{background:#fdf3c8;color:var(--ink)}
+  .appr{background:#cfead3;color:var(--ink)}
+  .rej{background:#f8d2d4;color:var(--ink)}
+
+  .grid-demo{font-size:8pt;border:1px solid var(--ink-line);border-radius:5px;overflow:hidden;margin:10px 0 14px}
+  .grid-demo table{margin:0;font-size:8pt}
+  .grid-demo th{text-align:center}
+  .grid-demo th:first-child,.grid-demo td:first-child{text-align:left}
+  .grid-demo td{text-align:center}
+  .tt{padding:1px 6px;border-radius:3px;font-size:7.4pt;white-space:nowrap}
+
+  .two{display:flex;gap:16px}
+  .two>div{flex:1}
+  .kicker{font-size:7.8pt;text-transform:uppercase;letter-spacing:.8px;
+          color:var(--gold-deep);font-weight:700;margin-bottom:3px}
+  ul{margin:0 0 10px;padding-left:17px}
+  li{margin-bottom:4px}
+  .foot{position:running(footer)}
+</style></head><body>
+
+</head><body>
+
+<div class="cover">
+  <div class="kicker">People Portal &middot; Module Guide</div>
+  <h1>HR Modules</h1>
+  <div class="rule"></div>
+  <p class="sub">Users, roles, announcements, credits, regularization,<br>holidays, logs and the proxy screens.</p>
+
+  <div class="toc">
+    <div><span>1</span> What the module is</div>
+    <div><span>2</span> User Management</div>
+    <div><span>3</span> Role Management</div>
+    <div><span>4</span> HR Announcements</div>
+    <div><span>5</span> Leave Credits</div>
+    <div><span>6</span> Employee Regularization</div>
+    <div><span>7</span> Holidays</div>
+    <div><span>8</span> Associate Logs</div>
+    <div><span>9</span> Active Associates</div>
+    <div><span>10</span> Proxy Leaves and Proxy Attendance</div>
+    <div><span>11</span> API reference</div>
+    <div><span>12</span> Permissions</div>
+  </div>
+
+  <div class="meta">People Portal module documentation &middot; generated 2 October 2026</div>
+</div>
+
+<div class="page">
+
+<h2 style="margin-top:0">1 &nbsp;What the module is</h2>
+<p><b>HR Modules</b> groups the ten screens that act on other people rather than on
+yourself. Unlike My Team, these are not scoped to a reporting line &mdash; they are
+company-wide, and access is controlled purely by permission.</p>
+<table>
+  <thead><tr><th style="width:30%">Screen</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>User Management</td><td>Create and maintain user accounts</td></tr>
+    <tr><td>Role Management</td><td>Define roles and what each may do</td></tr>
+    <tr><td>HR Announcements</td><td>Publish company notices</td></tr>
+    <tr><td>Leave Credits</td><td>Grant and correct leave balances</td></tr>
+    <tr><td>Employee Regularization</td><td>Move staff from probationary to regular</td></tr>
+    <tr><td>Holidays</td><td>Maintain the holiday calendar</td></tr>
+    <tr><td>Associate Logs</td><td>File documents against an associate</td></tr>
+    <tr><td>Active Associates</td><td>See who is clocked in right now</td></tr>
+    <tr><td>Proxy Leaves</td><td>File a leave on someone's behalf</td></tr>
+    <tr><td>Proxy Attendance</td><td>Record attendance on someone's behalf</td></tr>
+  </tbody>
+</table>
+
+<h2>2 &nbsp;User Management</h2>
+<p>The account register. A user row carries name, email, status, role, team, shift and
+immediate supervisor &mdash; that last field is what populates every <b>My Team</b> screen,
+so getting it right matters beyond this page.</p>
+<ul>
+  <li>Create, edit, view and soft-delete; a bulk action endpoint handles multi-row changes.</li>
+  <li>A password is optional at creation &mdash; sign-in can be done by emailed magic link.</li>
+  <li>Deleting is a soft delete, so history and audit trails survive.</li>
+</ul>
+<div class="note"><b>Email validation needs live DNS.</b> The rule is
+<code>email:rfc,dns</code>, which requires the domain to resolve. Addresses on a
+non-resolving domain such as <code>.test</code> are rejected through the UI even though
+seeders create them happily.</div>
+
+<h2>3 &nbsp;Role Management</h2>
+<p>Roles and permissions, built on Spatie's permission package. The screen lists roles with
+a permission count and opens a modal grouping every permission by module, with per-module
+and global select-all.</p>
+<div class="note"><b>Two guards, always in step.</b> Every role and permission exists twice,
+once for <code>web</code> and once for <code>sanctum</code>. The API authenticates with
+sanctum, so a permission created only for <code>web</code> appears in the UI but denies
+every request.</div>
+<p>Roles ship seeded: Super Admin (everything), Admin, HR, Manager, Team Lead and Employee.
+<code>RolePermissionSeeder</code> is the single source of truth and uses
+<code>syncPermissions</code>, which <i>replaces</i> a role's set rather than adding to it.</p>
+
+<h2>4 &nbsp;HR Announcements</h2>
+<p>Image-based company notices. Because the content is a picture, this screen is a gallery
+rather than a table: a card grid with the image, title, date and author, plus a lightbox for
+the full-size view.</p>
+<ul>
+  <li>Upload accepts JPG, PNG, GIF and WebP up to 5&nbsp;MB.</li>
+  <li>A title is optional; left blank it becomes &ldquo;Company Update&rdquo;.</li>
+  <li>Recent active announcements also surface on the Dashboard.</li>
+</ul>
+
+<h2>5 &nbsp;Leave Credits</h2>
+<p>Where balances are granted and corrected. One row per user per year, holding VL, SL,
+PTO, CTO and birthday leave.</p>
+<table>
+  <thead><tr><th style="width:26%">Action</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>Edit</td><td>Set credits, used and pending for one user</td></tr>
+    <tr><td>Import</td><td>Bulk-load balances from a file</td></tr>
+    <tr><td>Export</td><td>Download the current balances</td></tr>
+    <tr><td>Reset pending</td><td>Clear a user's pending buckets when they have drifted</td></tr>
+  </tbody>
+</table>
+<div class="note"><b>Pending is normally automatic.</b> <code>LeaveObserver</code> moves days
+between pending and used as leaves are filed, approved, rejected and cancelled.
+<i>Reset pending</i> is a repair tool for when direct database edits have left the
+arithmetic out of step &mdash; not part of the normal flow.</div>
+<p>CTO is the one bucket measured in <b>hours</b> rather than days. It is this company's
+compensatory-time concept and is granted here by HR; there is no overtime request to file.</p>
+
+<h2>6 &nbsp;Employee Regularization</h2>
+<p>Lists probationary staff with their hire date and the regularization date due, and lets
+HR set or clear that date. Setting it marks the employee <b>Regular</b>.</p>
+<p>That status is not cosmetic &mdash; it decides the leave scheme:</p>
+<table>
+  <thead><tr><th style="width:30%">Employment status</th><th>Leave treatment</th></tr></thead>
+  <tbody>
+    <tr><td>Regular</td><td>Full annual grant up front (&ldquo;Fixed&rdquo;)</td></tr>
+    <tr><td>Anything else</td><td>Accrues monthly (&ldquo;Accrual&rdquo;)</td></tr>
+  </tbody>
+</table>
+<p>The same rule is shown on <b>Profile</b> and applied by <code>LeaveCreditSeeder</code>.</p>
+
+<h2>7 &nbsp;Holidays</h2>
+<p>The holiday calendar, filterable by month and calendar.</p>
+<table>
+  <thead><tr><th style="width:34%">Type</th><th>Label</th></tr></thead>
+  <tbody>
+    <tr><td><code>regular</code></td><td>Regular Holiday</td></tr>
+    <tr><td><code>special_non_working</code></td><td>Special (Non-Working)</td></tr>
+    <tr><td><code>company</code></td><td>Company Holiday</td></tr>
+  </tbody>
+</table>
+<p>A <code>calendar</code> field allows more than one set &mdash; useful where a client site
+observes different days. Holidays can be deactivated rather than deleted
+(<code>is_active</code>), which keeps history intact.</p>
+<div class="note"><b>Viewing is not managing.</b> <code>view holidays</code> is held by every
+role so the calendar is visible to all; create, edit and delete are HR-side only.</div>
+
+<h2>8 &nbsp;Associate Logs</h2>
+<p>A document trail against an individual &mdash; a memo, a notice, an acknowledgement. Each
+entry carries a date, the detail text, the author and an optional file.</p>
+<p>An associate can download their own filed documents from <b>Profile</b>, through a route
+scoped to the signed-in user, so one person cannot reach another's file by guessing an ID.</p>
+
+<h2>9 &nbsp;Active Associates</h2>
+<p>A live view of who is clocked in, auto-refreshing every 30 seconds. Three tiles count
+Working, On Break and Total Active; the table lists each person with status, time in and
+department.</p>
+<p>Search here is client-side &mdash; it filters the rows already loaded rather than
+re-querying, which keeps typing instant. The tiles deliberately show the unfiltered
+headcount.</p>
+
+<h2>10 &nbsp;Proxy Leaves and Proxy Attendance</h2>
+<p>Two screens for acting on behalf of someone who cannot. Proxy Leaves files a leave
+against another user; Proxy Attendance records or corrects an attendance row.</p>
+<ul>
+  <li>Both offer cut-off period helpers, so entries can be placed in the right payroll window.</li>
+  <li>Both expose stats and CSV export alongside the list.</li>
+  <li>A proxy-filed leave is an ordinary leave once created &mdash; <code>LeaveObserver</code>
+      moves credits exactly as it would for a self-filed one.</li>
+</ul>
+<div class="note"><b>Separately permissioned.</b> Proxy create, edit and delete are distinct
+permissions from viewing, so an auditor can be given sight of proxy activity without the
+ability to file.</div>
+
+<h2>11 &nbsp;API reference</h2>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:50%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET/POST</td><td><code>/api/users</code></td><td><code>view users</code> / <code>create users</code></td></tr>
+    <tr><td>PUT/DELETE</td><td><code>/api/users/{user}</code></td><td><code>edit users</code> / <code>delete users</code></td></tr>
+    <tr><td>POST</td><td><code>/api/users/bulk-action</code></td><td><code>edit users</code></td></tr>
+    <tr><td>GET</td><td><code>/api/roles</code> &middot; <code>/api/roles/permissions</code> &middot; <code>/api/roles/stats</code></td><td><code>view roles</code></td></tr>
+    <tr><td>POST/PUT/DELETE</td><td><code>/api/roles</code>, <code>/api/roles/{role}</code></td><td><code>create|edit|delete roles</code></td></tr>
+    <tr><td>GET/POST</td><td><code>/api/hr/announcements</code></td><td><code>view|create hr announcements</code></td></tr>
+    <tr><td>PUT/DELETE</td><td><code>/api/hr/announcements/{id}</code></td><td><code>edit|delete hr announcements</code></td></tr>
+    <tr><td>GET</td><td><code>/api/hr/leave-credits</code> &middot; <code>/export</code></td><td><code>view leave credits</code></td></tr>
+    <tr><td>PUT/POST</td><td><code>/api/hr/leave-credits/{user}</code> &middot; <code>/import</code> &middot; <code>/reset-pending</code></td><td><code>edit leave credits</code></td></tr>
+    <tr><td>GET/PUT/DELETE</td><td><code>/api/hr/employees/regularization</code></td><td><code>edit employee regularization</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/holidays</code> &middot; <code>/month</code></td><td><code>view holidays</code></td></tr>
+    <tr><td>POST/PUT/DELETE</td><td><code>/api/user/holidays</code>, <code>/{holiday}</code></td><td><code>create|edit|delete holidays</code></td></tr>
+    <tr><td>GET/POST/DELETE</td><td><code>/api/hr/associate-logs</code></td><td><code>view|create|delete associate logs</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/active-associates</code></td><td><code>view active associates</code></td></tr>
+    <tr><td>GET/POST/PUT/DELETE</td><td><code>/api/hr/proxy-leaves</code></td><td><code>view|create|edit|delete proxy leaves</code></td></tr>
+    <tr><td>GET/POST/PUT/DELETE</td><td><code>/api/hr/proxy-attendance</code></td><td><code>view|create|edit|delete proxy attendance</code></td></tr>
+  </tbody>
+</table>
+
+<h2>12 &nbsp;Permissions</h2>
+<table>
+  <thead><tr><th style="width:34%">Area</th><th>Held by</th></tr></thead>
+  <tbody>
+    <tr><td>Users, roles, announcements, associate logs, active associates</td><td>Super Admin, Admin; HR has all but role management and user deletion</td></tr>
+    <tr><td>Leave credits, employee regularization, holidays, proxy screens</td><td>Super Admin, Admin, HR</td></tr>
+    <tr><td><code>view holidays</code> alone</td><td>All six roles</td></tr>
+  </tbody>
+</table>
+<p>Manager, Team Lead and Employee hold none of the HR-side permissions. They reach the
+same underlying data only through <b>My Records</b> and <b>My Team</b>, which are scoped to
+themselves and their direct reports.</p>
+
+</div>
+
+</body></html>

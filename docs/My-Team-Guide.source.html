@@ -1,0 +1,226 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>My Team — How It Works</title>
+<style>
+  :root{
+    --gold:#c6973d; --gold-deep:#876729;
+    --ink:#090838; --ink-mid:#6c6c8a; --ink-line:#c1c2cf; --ink-wash:#ececfa;
+    --card:#fcfcfc;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);
+       font-size:10.2pt; line-height:1.55; margin:0;}
+  h1{font-size:25pt;margin:0 0 4px;letter-spacing:-.4px}
+  h2{font-size:14pt;margin:26px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--gold);
+     page-break-after:avoid; letter-spacing:-.2px}
+  h3{font-size:11pt;margin:18px 0 6px;page-break-after:avoid}
+  p{margin:0 0 9px}
+  code{font-family:"SFMono-Regular",Consolas,monospace;font-size:8.8pt;
+       background:var(--ink-wash);padding:1px 4px;border-radius:3px}
+  .page{padding:0 0 2px}
+  .note,.grid-demo,ul{page-break-inside:avoid}
+
+  .cover{height:9.3in;display:flex;flex-direction:column;justify-content:center;
+         padding:0 .3in;page-break-after:always}
+  .rule{width:70px;height:5px;background:var(--gold);margin:16px 0 20px;border-radius:3px}
+  .sub{font-size:13pt;color:var(--ink-mid);margin:0 0 30px}
+  .meta{font-size:9pt;color:var(--ink-mid);border-top:1px solid var(--ink-line);padding-top:14px;margin-top:34px}
+  .toc{margin-top:26px}
+  .toc div{padding:5px 0;border-bottom:1px solid var(--ink-wash);font-size:10.5pt}
+  .toc span{color:var(--gold-deep);font-weight:700;display:inline-block;width:26px}
+
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:9pt}
+  th{background:var(--ink-wash);text-align:left;padding:6px 8px;font-size:7.8pt;
+     text-transform:uppercase;letter-spacing:.5px;color:var(--ink-mid);
+     border-bottom:1px solid var(--ink-line)}
+  td{padding:6px 8px;border-bottom:1px solid var(--ink-wash);vertical-align:top}
+  td code{background:none;padding:0}
+  tr{page-break-inside:avoid}
+  thead{page-break-after:avoid}
+  /* keep a section label, its lead-in line and the table head together */
+  .kicker{page-break-after:avoid}
+  .block{page-break-inside:avoid}
+  h3{page-break-after:avoid}
+
+  .note{background:var(--ink-wash);border-left:3px solid var(--gold);
+        padding:9px 12px;margin:12px 0;border-radius:0 4px 4px 0;font-size:9.4pt}
+  .note b{color:var(--gold-deep)}
+
+  .flow{display:flex;align-items:center;gap:7px;margin:12px 0 16px;flex-wrap:wrap}
+  .st{padding:5px 11px;border-radius:14px;font-size:8.6pt;font-weight:700;
+      text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+  .arrow{color:var(--ink-mid);font-size:11pt}
+  .draft{background:#e5e5ee;color:var(--ink)}
+  .pend{background:#fdf3c8;color:var(--ink)}
+  .appr{background:#cfead3;color:var(--ink)}
+  .rej{background:#f8d2d4;color:var(--ink)}
+
+  .grid-demo{font-size:8pt;border:1px solid var(--ink-line);border-radius:5px;overflow:hidden;margin:10px 0 14px}
+  .grid-demo table{margin:0;font-size:8pt}
+  .grid-demo th{text-align:center}
+  .grid-demo th:first-child,.grid-demo td:first-child{text-align:left}
+  .grid-demo td{text-align:center}
+  .tt{padding:1px 6px;border-radius:3px;font-size:7.4pt;white-space:nowrap}
+
+  .two{display:flex;gap:16px}
+  .two>div{flex:1}
+  .kicker{font-size:7.8pt;text-transform:uppercase;letter-spacing:.8px;
+          color:var(--gold-deep);font-weight:700;margin-bottom:3px}
+  ul{margin:0 0 10px;padding-left:17px}
+  li{margin-bottom:4px}
+  .foot{position:running(footer)}
+</style></head><body>
+
+</head><body>
+
+<div class="cover">
+  <div class="kicker">People Portal &middot; Module Guide</div>
+  <h1>My Team</h1>
+  <div class="rule"></div>
+  <p class="sub">The supervisor view of attendance, time entries,<br>leaves and shift changes for direct reports.</p>
+
+  <div class="toc">
+    <div><span>1</span> What the module is</div>
+    <div><span>2</span> Who counts as 'my team'</div>
+    <div><span>3</span> Team's Attendance</div>
+    <div><span>4</span> Team's Time Entries</div>
+    <div><span>5</span> Team's Leaves</div>
+    <div><span>6</span> Team's Shift</div>
+    <div><span>7</span> Where approval actually happens</div>
+    <div><span>8</span> Exports</div>
+    <div><span>9</span> API reference</div>
+    <div><span>10</span> Permissions</div>
+  </div>
+
+  <div class="meta">People Portal module documentation &middot; generated 2 October 2026</div>
+</div>
+
+<div class="page">
+
+<h2 style="margin-top:0">1 &nbsp;What the module is</h2>
+<p><b>My Team</b> is the supervisor's mirror of My Records. Each screen shows the same
+data as its personal counterpart, widened from one person to that supervisor's direct
+reports, and with the employee as the leading column.</p>
+<table>
+  <thead><tr><th style="width:30%">Screen</th><th>Shows, for every direct report</th></tr></thead>
+  <tbody>
+    <tr><td>Team's Attendance</td><td>Daily clock-ins, clock-outs and worked hours</td></tr>
+    <tr><td>Team's Time Entries</td><td>A weekly roster, drillable into one person's grid</td></tr>
+    <tr><td>Team's Leaves</td><td>Every leave filed, with reason, notes and attachment</td></tr>
+    <tr><td>Team's Shift</td><td>Shift change requests and where they stand</td></tr>
+  </tbody>
+</table>
+
+<h2>2 &nbsp;Who counts as &ldquo;my team&rdquo;</h2>
+<p>Membership is a single field: <code>users.immediate_sup_id</code>. A user is on your
+team if their <code>immediate_sup_id</code> is your ID. That is a <b>direct</b> line only
+&mdash; it does not walk the chain, so a report's own reports do not appear.</p>
+<div class="note"><b>Enforced server-side.</b> Every team endpoint re-derives the
+subordinate list from the signed-in user. Asking for a user who is not your direct report
+returns <b>403</b>, so the filter cannot be bypassed by editing an ID in the URL.</div>
+
+<h2>3 &nbsp;Team's Attendance</h2>
+<p>One row per employee per day.</p>
+<table>
+  <thead><tr><th style="width:30%">Column</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Employee</td><td>Avatar initials, name and email</td></tr>
+    <tr><td>Time In / Time Out</td><td>Both on one column, stacked</td></tr>
+    <tr><td>Date</td><td>The attendance date</td></tr>
+    <tr><td>Working Hours</td><td>Net of deducted breaks</td></tr>
+    <tr><td>Status</td><td>Present, late, absent and so on</td></tr>
+  </tbody>
+</table>
+<p>Filters cover employee, status and a date range, and the result set exports to CSV.</p>
+
+<h2>4 &nbsp;Team's Time Entries</h2>
+<p>Two views sharing one selected week.</p>
+<h3>Roster view</h3>
+<p>Every direct report for the chosen week: name, total hours and timesheet status. People
+who never started a sheet still appear, synthesised as <code>not started</code>, so the
+roster is a complete picture of the team rather than only those who filed.</p>
+<h3>Grid view</h3>
+<p>Clicking a person opens their week as the same read-only grid used on Time Entries
+&mdash; project, task, time type, memo and the seven day columns. Even an empty week
+renders its day headers, so the layout does not collapse.</p>
+<p>A <b>Previous / Next</b> stepper moves the week, with the week label shown beside it.</p>
+<div class="note"><b>Weeks are Monday-based.</b> Dates are formatted in the browser's own
+timezone rather than UTC &mdash; converting first would roll local midnight back to Sunday,
+and because the API snaps to the Monday of the week, that would silently land on the
+previous week.</div>
+
+<h2>5 &nbsp;Team's Leaves</h2>
+<p>A table of every leave filed by the team: employee, leave type, start, end, duration,
+reason, notes, attachment, submitted and status. A Status dropdown filters the list and
+carries live counts, and the date range uses the same overlap test as Leave Requests.</p>
+<ul>
+  <li>Reason and Notes are clamped to two lines, with the full text on hover.</li>
+  <li>An attachment opens in a preview modal &mdash; images inline, PDFs in a frame, with
+      Download as a fallback.</li>
+  <li>The list is read-only. Approving happens on the Dashboard.</li>
+</ul>
+
+<h2>6 &nbsp;Team's Shift</h2>
+<p>Shift change requests from the team: employee, current shift, requested shift,
+effective date, reason, notes, submitted and status.</p>
+<div class="note"><b>One gap to know about.</b> The status dropdown offers All, Pending,
+Approved and Rejected. The database also stores <code>applied</code> &mdash; a request
+whose effective date has passed. Those rows are only visible under <b>All Statuses</b>.</div>
+
+<h2>7 &nbsp;Where approval actually happens</h2>
+<p>None of these four screens approve anything. They are the record; the decision is made
+in the <b>Requests</b> panel on the Dashboard, which is the single approval queue for
+leaves, shift changes and timesheets alike. The team screens are where a supervisor looks
+things up, filters and exports.</p>
+<div class="flow">
+  <span class="st draft">My Team &mdash; review</span><span class="arrow">&rarr;</span>
+  <span class="st pend">Dashboard &mdash; decide</span><span class="arrow">&rarr;</span>
+  <span class="st appr">Status updates everywhere</span>
+</div>
+
+<h2>8 &nbsp;Exports</h2>
+<p>Three of the four screens export CSV, each behind its own permission so export can be
+withheld without withholding the view:</p>
+<table>
+  <thead><tr><th style="width:34%">Screen</th><th style="width:34%">Permission</th><th>Scope of the file</th></tr></thead>
+  <tbody>
+    <tr><td>Team's Attendance</td><td><code>export team attendance</code></td><td>The current filter</td></tr>
+    <tr><td>Team's Time Entries</td><td><code>export team time entries</code></td><td>The selected week</td></tr>
+    <tr><td>Team's Leaves</td><td><code>export team leaves</code></td><td>The current filter</td></tr>
+  </tbody>
+</table>
+
+<h2>9 &nbsp;API reference</h2>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:52%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/user/my-team-attendance/attendance</code></td><td><code>view team attendance</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-attendance/export</code></td><td><code>export team attendance</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-time-entries</code></td><td><code>view team time entries</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-time-entries/{user}/week</code></td><td><code>view team time entries</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-time-entries/export</code></td><td><code>export team time entries</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-leaves/leaves</code></td><td><code>view team leaves</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-leaves/stats</code></td><td><code>view team leaves</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-leaves/leaves/{leave}/attachment/download</code></td><td><code>view team leaves</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-leaves/export</code></td><td><code>export team leaves</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-team-shift/requests</code></td><td><code>view team shift</code></td></tr>
+  </tbody>
+</table>
+
+<h2>10 &nbsp;Permissions</h2>
+<table>
+  <thead><tr><th style="width:40%">Permission</th><th>Held by</th></tr></thead>
+  <tbody>
+    <tr><td><code>view team attendance</code> &middot; <code>export team attendance</code></td><td>Super Admin, Manager, Team Lead</td></tr>
+    <tr><td><code>view team time entries</code> &middot; <code>export team time entries</code></td><td>Super Admin, Manager, Team Lead</td></tr>
+    <tr><td><code>view team leaves</code> &middot; <code>export team leaves</code></td><td>Super Admin, Manager, Team Lead</td></tr>
+    <tr><td><code>view team shift</code> &middot; <code>approve shift requests</code></td><td>Super Admin, Admin, HR, Manager, Team Lead</td></tr>
+  </tbody>
+</table>
+<div class="note"><b>Permission is necessary, not sufficient.</b> Holding
+<code>view team attendance</code> does not reveal the whole company &mdash; the result is
+still filtered to your own direct reports. A Manager with nobody reporting to them sees
+four empty screens.</div>
+
+</div>
+
+</body></html>

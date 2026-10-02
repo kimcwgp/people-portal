@@ -1,0 +1,293 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>My Records — How It Works</title>
+<style>
+  :root{
+    --gold:#c6973d; --gold-deep:#876729;
+    --ink:#090838; --ink-mid:#6c6c8a; --ink-line:#c1c2cf; --ink-wash:#ececfa;
+    --card:#fcfcfc;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);
+       font-size:10.2pt; line-height:1.55; margin:0;}
+  h1{font-size:25pt;margin:0 0 4px;letter-spacing:-.4px}
+  h2{font-size:14pt;margin:26px 0 14px;padding-bottom:6px;border-bottom:2px solid var(--gold);
+     page-break-after:avoid; letter-spacing:-.2px}
+  h3{font-size:11pt;margin:18px 0 6px;page-break-after:avoid}
+  p{margin:0 0 9px}
+  code{font-family:"SFMono-Regular",Consolas,monospace;font-size:8.8pt;
+       background:var(--ink-wash);padding:1px 4px;border-radius:3px}
+  .page{padding:0 0 2px}
+  .note,.grid-demo,ul{page-break-inside:avoid}
+
+  .cover{height:9.3in;display:flex;flex-direction:column;justify-content:center;
+         padding:0 .3in;page-break-after:always}
+  .rule{width:70px;height:5px;background:var(--gold);margin:16px 0 20px;border-radius:3px}
+  .sub{font-size:13pt;color:var(--ink-mid);margin:0 0 30px}
+  .meta{font-size:9pt;color:var(--ink-mid);border-top:1px solid var(--ink-line);padding-top:14px;margin-top:34px}
+  .toc{margin-top:26px}
+  .toc div{padding:5px 0;border-bottom:1px solid var(--ink-wash);font-size:10.5pt}
+  .toc span{color:var(--gold-deep);font-weight:700;display:inline-block;width:26px}
+
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:9pt}
+  th{background:var(--ink-wash);text-align:left;padding:6px 8px;font-size:7.8pt;
+     text-transform:uppercase;letter-spacing:.5px;color:var(--ink-mid);
+     border-bottom:1px solid var(--ink-line)}
+  td{padding:6px 8px;border-bottom:1px solid var(--ink-wash);vertical-align:top}
+  td code{background:none;padding:0}
+  tr{page-break-inside:avoid}
+  thead{page-break-after:avoid}
+  /* keep a section label, its lead-in line and the table head together */
+  .kicker{page-break-after:avoid}
+  .block{page-break-inside:avoid}
+  h3{page-break-after:avoid}
+
+  .note{background:var(--ink-wash);border-left:3px solid var(--gold);
+        padding:9px 12px;margin:12px 0;border-radius:0 4px 4px 0;font-size:9.4pt}
+  .note b{color:var(--gold-deep)}
+
+  .flow{display:flex;align-items:center;gap:7px;margin:12px 0 16px;flex-wrap:wrap}
+  .st{padding:5px 11px;border-radius:14px;font-size:8.6pt;font-weight:700;
+      text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+  .arrow{color:var(--ink-mid);font-size:11pt}
+  .draft{background:#e5e5ee;color:var(--ink)}
+  .pend{background:#fdf3c8;color:var(--ink)}
+  .appr{background:#cfead3;color:var(--ink)}
+  .rej{background:#f8d2d4;color:var(--ink)}
+
+  .grid-demo{font-size:8pt;border:1px solid var(--ink-line);border-radius:5px;overflow:hidden;margin:10px 0 14px}
+  .grid-demo table{margin:0;font-size:8pt}
+  .grid-demo th{text-align:center}
+  .grid-demo th:first-child,.grid-demo td:first-child{text-align:left}
+  .grid-demo td{text-align:center}
+  .tt{padding:1px 6px;border-radius:3px;font-size:7.4pt;white-space:nowrap}
+
+  .two{display:flex;gap:16px}
+  .two>div{flex:1}
+  .kicker{font-size:7.8pt;text-transform:uppercase;letter-spacing:.8px;
+          color:var(--gold-deep);font-weight:700;margin-bottom:3px}
+  ul{margin:0 0 10px;padding-left:17px}
+  li{margin-bottom:4px}
+  .foot{position:running(footer)}
+</style></head><body>
+
+</head><body>
+
+<div class="cover">
+  <div class="kicker">People Portal &middot; Module Guide</div>
+  <h1>My Records</h1>
+  <div class="rule"></div>
+  <p class="sub">Attendance, Time Entries, Leave Requests and<br>My Shift &mdash; what an associate files about themselves.</p>
+
+  <div class="toc">
+    <div><span>1</span> What the module is</div>
+    <div><span>2</span> Attendance</div>
+    <div><span>3</span> Time Entries</div>
+    <div><span>4</span> Leave Requests</div>
+    <div><span>5</span> Leave credits and the observer</div>
+    <div><span>6</span> My Shift</div>
+    <div><span>7</span> Shared screen conventions</div>
+    <div><span>8</span> API reference</div>
+    <div><span>9</span> Permissions</div>
+  </div>
+
+  <div class="meta">People Portal module documentation &middot; generated 2 October 2026</div>
+</div>
+
+<div class="page">
+
+<h2 style="margin-top:0">1 &nbsp;What the module is</h2>
+<p><b>My Records</b> is everything an associate files or reviews about themselves. Four
+screens sit under it, and each has an exact counterpart under <b>My Team</b> that a
+supervisor uses to review the same data for their direct reports.</p>
+<table>
+  <thead><tr><th style="width:26%">Screen</th><th style="width:38%">Answers</th><th>Team counterpart</th></tr></thead>
+  <tbody>
+    <tr><td>Attendance</td><td>When did I clock in and out?</td><td>Team's Attendance</td></tr>
+    <tr><td>Time Entries</td><td>What did I spend the week on?</td><td>Team's Time Entries</td></tr>
+    <tr><td>Leave Requests</td><td>What leave have I filed?</td><td>Team's Leaves</td></tr>
+    <tr><td>My Shift</td><td>What shift am I on, and can I change it?</td><td>Team's Shift</td></tr>
+  </tbody>
+</table>
+
+<h2>2 &nbsp;Attendance</h2>
+<p>A read-only history of the rows the Dashboard clock creates. One row per day, with
+time in, time out, break totals and worked hours.</p>
+<ul>
+  <li><b>Filters.</b> A month selector and a free date range, applied with
+      <b>Filter</b> and reset with <b>Clear</b>.</li>
+  <li><b>Export.</b> <code>GET /api/user/my-attendance/export</code> streams a CSV of the
+      current filter, behind its own <code>export my attendance</code> permission.</li>
+  <li><b>Corrections.</b> If a row is wrong, an associate raises an attendance correction.
+      It records the proposed time in, time out and lunch window, and goes to the
+      supervisor's Dashboard queue for approval.</li>
+</ul>
+<div class="note"><b>Known rough edge.</b> Choosing a month silently clears a date range
+you already typed. The two filters are alternatives, but the screen does not say so.</div>
+
+<h2>3 &nbsp;Time Entries</h2>
+<p>The weekly timesheet, modelled on NetSuite: one row per project / task / time type,
+seven day columns, and a row total. A week moves
+<span class="st draft">DRAFT</span> &rarr; <span class="st pend">PENDING</span> &rarr;
+<span class="st appr">APPROVED</span>, and a sent-back week returns to draft for editing.</p>
+<p>This module has its own document. See <b>Time Entries &mdash; How It Works</b> for the
+grid, the lifecycle, the data model and the supervisor view.</p>
+<div class="note"><b>Weeks run Monday to Sunday.</b> The API snaps any date you give it to
+the Monday of its week (<code>Timesheet::weekStartFor</code>), so a timesheet is always
+addressed by its Monday.</div>
+
+<h2>4 &nbsp;Leave Requests</h2>
+<p>Where leave is filed and tracked. The screen opens with the five credit tiles, then a
+filter row, then the table.</p>
+<table>
+  <thead><tr><th style="width:30%">Column group</th><th>Holds</th></tr></thead>
+  <tbody>
+    <tr><td>Leave Type</td><td>The type chip &mdash; VL, SL, PTO, BDO and so on</td></tr>
+    <tr><td>Start / End / Duration</td><td>Dates plus All Day, a half day, or a custom time window</td></tr>
+    <tr><td>Reason / Notes</td><td>Clamped to two lines; hover shows the full text</td></tr>
+    <tr><td>Attachment</td><td>Opens in a preview modal rather than downloading</td></tr>
+    <tr><td>Submitted / Status / Action</td><td>When it was filed, where it stands, what you may do</td></tr>
+  </tbody>
+</table>
+
+<h3>Filing rules</h3>
+<ul>
+  <li>Leave may be backdated by at most <b>30 days</b>; the date inputs enforce the floor.</li>
+  <li>End date may not precede start date.</li>
+  <li><b>Sick Leave (WITH Medical Certificate)</b> requires an attachment &mdash; the form
+      blocks submission without one.</li>
+  <li><b>Edit</b> is available only while <code>pending</code>.</li>
+  <li><b>Cancel</b> is available while <code>pending</code> <i>or</i> <code>approved</code>,
+      and asks for a reason that is stored on the row.</li>
+</ul>
+
+<h3>Status filter</h3>
+<p>A single dropdown &mdash; All / Pending / Approved / Rejected / Cancelled &mdash; with a
+live count beside each. The All count is the unfiltered total, deliberately not the
+paginated total of whichever status is selected.</p>
+
+<div class="note"><b>Date filtering is overlap, not containment.</b> Filtering 26&ndash;26
+October returns a leave running 25&ndash;27 October, because the range test is
+<code>end_date &ge; from</code> AND <code>start_date &le; to</code>. Containment would have
+hidden it.</div>
+
+<h2>5 &nbsp;Leave credits and the observer</h2>
+<p>Credits live in one <code>leave_credits</code> row per user per year, and are moved
+automatically by <code>LeaveObserver</code> as a leave changes state &mdash; never by hand
+from this screen.</p>
+<table>
+  <thead><tr><th style="width:26%">Event</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>Leave created</td><td>Days are added to the matching <code>*_pending</code> bucket</td></tr>
+    <tr><td>Approved</td><td>Days move from <code>*_pending</code> to <code>*_used</code></td></tr>
+    <tr><td>Rejected or cancelled</td><td>Days come out of <code>*_pending</code></td></tr>
+    <tr><td>Deleted</td><td>Pending days are released</td></tr>
+  </tbody>
+</table>
+<div class="note"><b>Do not move leave rows behind the observer's back.</b> Force-deleting
+leaves in the database does not reverse the credit arithmetic, which leaves
+<code>used</code> and <code>pending</code> overstated. Rebuild with
+<code>migrate:fresh --seed</code> instead.</div>
+
+<h3>Credit buckets</h3>
+<table>
+  <thead><tr><th style="width:16%">Bucket</th><th style="width:16%">Unit</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>VL</td><td>Days</td><td>Carries over; carryover is tracked separately</td></tr>
+    <tr><td>SL</td><td>Days</td><td>Does not carry over</td></tr>
+    <tr><td>PTO</td><td>Days</td><td>Same shape as VL and SL</td></tr>
+    <tr><td>CTO</td><td><b>Hours</b></td><td>Granted by HR; this is the company's compensatory-time concept &mdash; there is no overtime filing</td></tr>
+    <tr><td>Birthday</td><td>Days</td><td>One per year, subject to a tenure check</td></tr>
+  </tbody>
+</table>
+
+<h2>6 &nbsp;My Shift</h2>
+<p>Shows the shift currently assigned and the history of changes. An associate may request
+a different shift: they pick from the available shifts, give an effective date and a
+reason, and the request lands in their supervisor's Dashboard queue.</p>
+<div class="flow">
+  <span class="st pend">PENDING</span><span class="arrow">&rarr;</span>
+  <span class="st appr">APPROVED</span><span class="arrow">&rarr;</span>
+  <span class="st appr">APPLIED</span>
+  <span style="width:14px"></span>
+  <span class="st pend">PENDING</span><span class="arrow">&rarr;</span>
+  <span class="st rej">REJECTED</span>
+</div>
+<p><code>applied</code> marks a request whose effective date has arrived and whose shift is
+now live on the user record.</p>
+
+<h2>7 &nbsp;Shared screen conventions</h2>
+<p>Every screen in the module is built the same way, so behaviour transfers:</p>
+<ul>
+  <li>A title bar card holds the heading and the primary action.</li>
+  <li>Filters and results share one bordered card; filter fields use a notched outline
+      with the label sitting on the border.</li>
+  <li>Filters apply on <b>Filter</b>, not as you type, and <b>Clear</b> resets them.</li>
+  <li>Tables scroll horizontally below their minimum width; below <code>lg</code> they
+      become stacked cards rather than shrinking.</li>
+  <li>Long text is clamped to two lines with the full value on hover.</li>
+  <li>Pagination sits inside the table card.</li>
+</ul>
+
+<h2>8 &nbsp;API reference</h2>
+<div class="block">
+<div class="kicker">Attendance</div>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:52%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/user/my-attendance</code></td><td><code>view my attendance</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-attendance/export</code></td><td><code>export my attendance</code></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="block">
+<div class="kicker">Time Entries</div>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:52%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/user/time-entries</code></td><td><code>view my time entries</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/time-entries/week</code></td><td><code>view my time entries</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/time-entries/projects</code></td><td><code>view my time entries</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/time-entries/time-types</code></td><td><code>view my time entries</code></td></tr>
+    <tr><td>POST</td><td><code>/api/user/time-entries/{sheet}/entries</code></td><td><code>create my time entries</code></td></tr>
+    <tr><td>PUT</td><td><code>/api/user/time-entries/{sheet}/entries/{id}</code></td><td><code>edit my time entries</code></td></tr>
+    <tr><td>DELETE</td><td><code>/api/user/time-entries/{sheet}/entries/{id}</code></td><td><code>delete my time entries</code></td></tr>
+    <tr><td>POST</td><td><code>/api/user/time-entries/{sheet}/submit</code></td><td><code>submit my time entries</code></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="block">
+<div class="kicker">Leave Requests</div>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:52%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/user/my-leaves</code></td><td><code>view my leaves</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-leaves/stats</code></td><td><code>view my leaves</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-leaves/types</code></td><td><code>view my leaves</code></td></tr>
+    <tr><td>POST</td><td><code>/api/user/my-leaves</code></td><td><code>create my leaves</code></td></tr>
+    <tr><td>PUT</td><td><code>/api/user/my-leaves/{leave}</code></td><td><code>edit my leaves</code></td></tr>
+    <tr><td>PUT</td><td><code>/api/user/my-leaves/{leave}/cancel</code></td><td><code>cancel my leaves</code></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="block">
+<div class="kicker">My Shift</div>
+<table>
+  <thead><tr><th style="width:9%">Verb</th><th style="width:52%">Path</th><th>Permission</th></tr></thead>
+  <tbody>
+    <tr><td>GET</td><td><code>/api/user/my-shift/history</code></td><td><code>view my shift</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-shift/requests</code></td><td><code>view my shift</code></td></tr>
+    <tr><td>GET</td><td><code>/api/user/my-shift/available-shifts</code></td><td><code>view my shift</code></td></tr>
+    <tr><td>POST</td><td><code>/api/user/my-shift/request-change</code></td><td><code>request shift change</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>9 &nbsp;Permissions</h2>
+<p>All six roles hold the full My Records set &mdash; attendance, time entries, leaves and
+shift. The module is personal data, so the scope is always the signed-in user; there is no
+permission that widens it to someone else's records. Seeing another person's data is what
+<b>My Team</b> and the HR modules are for.</p>
+
+</div>
+
+</body></html>
