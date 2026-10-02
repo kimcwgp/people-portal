@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\Client;
-use App\Models\User;
 use App\Models\ProjectType;
 use App\Traits\HasPagination;
 use Illuminate\Http\Request;
@@ -16,7 +15,7 @@ class ProjectService
 
     public function getPaginatedProjects(Request $request): LengthAwarePaginator
     {
-        $query = Project::with(['client', 'projectManager', 'projectType']);
+        $query = Project::with(['client', 'projectType']);
 
         $query->filterByDateRange(
             $request->start_date,
@@ -46,7 +45,7 @@ class ProjectService
     public function createProject(array $data): Project
     {
         $project = Project::create($data);
-        $project->load(['client', 'projectManager', 'projectType']);
+        $project->load(['client', 'projectType']);
         
         return $project;
     }
@@ -54,7 +53,7 @@ class ProjectService
     public function updateProject(Project $project, array $data): Project
     {
         $project->update($data);
-        $project->load(['client', 'projectManager', 'projectType']);
+        $project->load(['client', 'projectType']);
         
         return $project;
     }
@@ -63,11 +62,6 @@ class ProjectService
     {
         return [
             'clients' => Client::select('id', 'name')->orderBy('name')->get(),
-            'project_managers' => User::select('id', 'name', 'email')
-                ->where('team_id', 6)
-                ->where('status', 1) 
-                ->orderBy('name')
-                ->get(),
             'project_types' => ProjectType::select('id', 'name', 'description')
                 ->orderBy('name')
                 ->get(),

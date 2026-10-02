@@ -17,19 +17,11 @@ class ProjectResource extends JsonResource
             'project_name' => $this->project_name,
             'project_type_id' => $this->project_type_id,
             'description' => $this->description,
-            'glip_url' => $this->glip_url,
             'client_id' => $this->client_id, 
-            'pm_id' => $this->pm_id,
             'client' => $this->whenLoaded('client', function () {
                 return [
                     'id' => $this->client->id,
                     'name' => $this->client->name,
-                ];
-            }),
-            'project_manager' => $this->whenLoaded('projectManager', function () {
-                return [
-                    'id' => $this->projectManager->id,
-                    'name' => $this->projectManager->name,
                 ];
             }),
             'project_type' => $this->whenLoaded('projectType', function () {
