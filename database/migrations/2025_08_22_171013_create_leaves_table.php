@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('approver_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected', 'cancelled'])->default('pending');
             $table->foreignId('leaves_type_id')->constrained('leaves_type')->onDelete('restrict');
             
             // Leave details
@@ -39,6 +39,10 @@ return new class extends Migration
             
             $table->timestamps();
             $table->softDeletes();
+
+            // Cancellation details
+            $table->timestamp('cancelled_at')->nullable();
+            $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('set null');
         });
     }
 

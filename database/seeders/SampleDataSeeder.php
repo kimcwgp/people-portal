@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 /**
  * Demo data for manual and exploratory testing: a full roster with 201-file
  * records, clients and projects, and several weeks of attendance, leaves,
- * overtime, standups and requests in every status.
+ * standups and requests in every status.
  *
  * Run on its own with:
  *   php artisan db:seed --class=SampleDataSeeder
@@ -30,9 +30,11 @@ class SampleDataSeeder extends Seeder
         LeaveCreditSeeder::class,
         LeaveSeeder::class,
         AttendanceSeeder::class,
-        OvertimeSeeder::class,
         StandupSeeder::class,
         ShiftChangeRequestSeeder::class,
+        TimeTypeSeeder::class,
+        TimesheetSeeder::class,
+        HolidaySeeder::class,
         HrAnnouncementSeeder::class,
         AssociateLogSeeder::class,
         ForApprovalSeeder::class,

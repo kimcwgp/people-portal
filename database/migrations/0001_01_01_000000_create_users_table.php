@@ -36,7 +36,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
-            $table->string('glip_url')->nullable();
             $table->boolean('status')->default(1);
             $table->boolean('online')->default(0);
             $table->unsignedBigInteger('team_id')->nullable();
@@ -106,6 +105,9 @@ return new class extends Migration
             // Status
             $table->enum('employee_status', ['active', 'inactive', 'terminated', 'resigned'])
                   ->default('active');
+            $table->enum('employment_status', ['Probationary', 'Regular', 'Resigned'])
+                  ->nullable()
+                  ->comment('Employment status: Probationary, Regular, or Resigned');
             $table->enum('employment_type', ['full_time', 'part_time', 'contract', 'intern', 'consultant'])
                   ->default('full_time');
             

@@ -26,11 +26,22 @@ return new class extends Migration
             $table->decimal('vl_pending', 8, 2)->default(0);
             $table->decimal('vl_carried_over', 8, 2)->default(0);
             $table->decimal('vl_carried_over_used', 5, 2)->default(0);
+
+            // Paid Time Off tracking, in days like VL and SL
+            $table->decimal('pto_credits', 8, 2)->default(0);
+            $table->decimal('pto_used', 8, 2)->default(0);
+            $table->decimal('pto_pending', 8, 2)->default(0);
             
             // Sick Leave tracking
             $table->decimal('sl_credits', 8, 2)->default(0);
             $table->decimal('sl_used', 8, 2)->default(0);
             $table->decimal('sl_pending', 8, 2)->default(0);
+
+            // Compensatory time off is granted by HR and tracked in HOURS,
+            // which is why it does not follow the same column shape.
+            $table->decimal('cto_hours', 8, 2)->default(0);
+            $table->decimal('cto_used_hours', 8, 2)->default(0);
+            $table->decimal('cto_pending_hours', 8, 2)->default(0);
             
             // Birthday Leave tracking
             $table->decimal('birthday_leave_count', 3, 2)->default(1.00);

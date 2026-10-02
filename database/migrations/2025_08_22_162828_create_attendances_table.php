@@ -16,8 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id'); 
             $table->text('notes')->nullable();
             $table->json('healthcheckJson')->nullable();
-            $table->time('time_in')->nullable();
-            $table->time('time_out')->nullable();
+            $table->dateTime('time_in')->nullable();
+            $table->dateTime('time_out')->nullable();
             $table->date('attendance_date');
             $table->timestamps();
             $table->softDeletes();

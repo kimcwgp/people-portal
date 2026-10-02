@@ -76,10 +76,6 @@ class RolePermissionSeeder extends Seeder
             'edit my standups',
             'delete my standups',
 
-            // My Overtime
-            'view my overtime',
-            'create my overtime',
-            'cancel my overtime',
 
             // My Shift
             'view my shift',
@@ -100,10 +96,22 @@ class RolePermissionSeeder extends Seeder
             // Team Standup
             'view team standups',
             'export team standups',
+            'view team time entries',
+            'export team time entries',
 
-            // Team Overtime
-            'view team overtime',
-            'export team overtime',
+            // My Time Entries
+            'view my time entries',
+            'create my time entries',
+            'edit my time entries',
+            'delete my time entries',
+            'submit my time entries',
+
+            // Time Type Management
+            'view time types',
+            'create time types',
+            'edit time types',
+            'delete time types',
+
 
             // HR Announcements
             'view hr announcements',
@@ -125,11 +133,6 @@ class RolePermissionSeeder extends Seeder
             'edit proxy leaves',
             'delete proxy leaves',
 
-            // Proxy Overtime
-            'view proxy overtime',
-            'create proxy overtime',
-            'edit proxy overtime',
-            'delete proxy overtime',
 
             // Proxy Attendance
             'view proxy attendance',
@@ -143,6 +146,12 @@ class RolePermissionSeeder extends Seeder
 
             // Employee Regularization
             'edit employee regularization',
+
+            // Holidays
+            'view holidays',
+            'create holidays',
+            'edit holidays',
+            'delete holidays',
         ];
 
         // Create permissions for both web and sanctum guards
@@ -205,15 +214,17 @@ class RolePermissionSeeder extends Seeder
                 'view active associates',
                 'view leave credits', 'edit leave credits',
                 'edit employee regularization',
+                'view holidays', 'create holidays', 'edit holidays', 'delete holidays',
                 'view proxy leaves', 'create proxy leaves', 'edit proxy leaves', 'delete proxy leaves',
-                'view proxy overtime', 'create proxy overtime', 'edit proxy overtime', 'delete proxy overtime',
                 'view proxy attendance', 'create proxy attendance', 'edit proxy attendance', 'delete proxy attendance',
                 'view my attendance', 'export my attendance',
                 'view my leaves', 'create my leaves', 'edit my leaves', 'cancel my leaves',
                 'view my standups', 'create my standups', 'edit my standups', 'delete my standups',
-                'view my overtime', 'create my overtime', 'cancel my overtime',
                 'view my shift', 'request shift change',
                 'view team shift', 'approve shift requests',
+                'view my time entries', 'create my time entries', 'edit my time entries',
+                'delete my time entries', 'submit my time entries',
+                'view time types', 'create time types', 'edit time types', 'delete time types',
             ];
             $admin->syncPermissions(
                 Permission::whereIn('name', $adminPermissions)
@@ -239,15 +250,17 @@ class RolePermissionSeeder extends Seeder
                 'view active associates',
                 'view leave credits', 'edit leave credits',
                 'edit employee regularization',
+                'view holidays', 'create holidays', 'edit holidays', 'delete holidays',
                 'view proxy leaves', 'create proxy leaves', 'edit proxy leaves', 'delete proxy leaves',
-                'view proxy overtime', 'create proxy overtime', 'edit proxy overtime', 'delete proxy overtime',
                 'view proxy attendance', 'create proxy attendance', 'edit proxy attendance', 'delete proxy attendance',
                 'view my attendance', 'export my attendance',
                 'view my leaves', 'create my leaves', 'edit my leaves', 'cancel my leaves',
                 'view my standups', 'create my standups', 'edit my standups', 'delete my standups',
-                'view my overtime', 'create my overtime', 'cancel my overtime',
                 'view my shift', 'request shift change',
                 'view team shift', 'approve shift requests',
+                'view my time entries', 'create my time entries', 'edit my time entries',
+                'delete my time entries', 'submit my time entries',
+                'view time types', 'create time types', 'edit time types', 'delete time types',
             ];
             $hr->syncPermissions(
                 Permission::whereIn('name', $hrPermissions)
@@ -264,17 +277,19 @@ class RolePermissionSeeder extends Seeder
             $managerPermissions = [
                 'view profile', 'edit profile', 'view dashboard',
                 'view shifts', 'view clients', 'view projects', 'view leave types',
-                'view hr announcements',
+                'view hr announcements', 'view holidays',
                 'view my attendance', 'export my attendance',
                 'view my leaves', 'create my leaves', 'edit my leaves', 'cancel my leaves',
                 'view my standups', 'create my standups', 'edit my standups', 'delete my standups',
-                'view my overtime', 'create my overtime', 'cancel my overtime',
                 'view my shift', 'request shift change',
                 'view team attendance', 'export team attendance',
                 'view team leaves', 'export team leaves',
                 'view team standups', 'export team standups',
-                'view team overtime', 'export team overtime',
+                'view team time entries',
+                'export team time entries',
                 'view team shift', 'approve shift requests',
+                'view my time entries', 'create my time entries', 'edit my time entries',
+                'delete my time entries', 'submit my time entries',
             ];
             $manager->syncPermissions(
                 Permission::whereIn('name', $managerPermissions)
@@ -295,6 +310,7 @@ class RolePermissionSeeder extends Seeder
 
                 // Dashboard
                 'view dashboard',
+                'view holidays',
 
                 // My Attendance (all methods)
                 'view my attendance',
@@ -312,14 +328,17 @@ class RolePermissionSeeder extends Seeder
                 'edit my leaves',
                 'cancel my leaves',
 
-                // My Overtime (all methods)
-                'view my overtime',
-                'create my overtime',
-                'cancel my overtime',
 
                 // My Shift
                 'view my shift',
                 'request shift change',
+
+                // My Time Entries
+                'view my time entries',
+                'create my time entries',
+                'edit my time entries',
+                'delete my time entries',
+                'submit my time entries',
             ];
             $employee->syncPermissions(
                 Permission::whereIn('name', $employeePermissions)
@@ -340,6 +359,7 @@ class RolePermissionSeeder extends Seeder
 
                 // Dashboard
                 'view dashboard',
+                'view holidays',
 
                 // My Attendance (all methods)
                 'view my attendance',
@@ -357,10 +377,6 @@ class RolePermissionSeeder extends Seeder
                 'edit my leaves',
                 'cancel my leaves',
 
-                // My Overtime (all methods)
-                'view my overtime',
-                'create my overtime',
-                'cancel my overtime',
 
                 // My Shift
                 'view my shift',
@@ -373,18 +389,24 @@ class RolePermissionSeeder extends Seeder
                 // My Team Standups
                 'view team standups',
                 'export team standups',
+                'view team time entries',
+                'export team time entries',
 
                 // My Team Leaves
                 'view team leaves',
                 'export team leaves',
 
-                // My Team Overtime
-                'view team overtime',
-                'export team overtime',
 
                 // My Team Shift
                 'view team shift',
                 'approve shift requests',
+
+                // My Time Entries
+                'view my time entries',
+                'create my time entries',
+                'edit my time entries',
+                'delete my time entries',
+                'submit my time entries',
             ];
             $teamLead->syncPermissions(
                 Permission::whereIn('name', $teamLeadPermissions)

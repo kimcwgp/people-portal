@@ -25,7 +25,7 @@ class HrAnnouncementSeeder extends Seeder
         ['Mid-Year Performance Review Schedule',                   -74, 341, true],
         ['Company Outing: Save the Date',                          -58, 507, true],
         ['Reminder: File Your Leaves Through the Portal',          -45, 226, true],
-        ['New Overtime Filing Cut-Off Every Friday',               -33, 198, true],
+        ['New Timesheet Cut-Off Every Friday',               -33, 198, true],
         ['Payroll Cut-Off Moved for the Holiday Week',             -21, 274, true],
         ['Annual Physical Examination Slots',                      -14, 163, true],
         ['Town Hall: Q3 Business Update',                           -7, 121, true],
