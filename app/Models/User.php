@@ -22,7 +22,6 @@ use App\Models\Attendance;
 use App\Models\ForApproval;
 use App\Models\Leave;
 use App\Models\LeaveCredit;
-use App\Models\Overtime;
 use App\Models\Project;
 use App\Models\Standup;
 
@@ -45,7 +44,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'glip_url',
         'status',
         'online',
         'team_id',
@@ -284,20 +282,6 @@ class User extends Authenticatable
         return $this->hasMany(Leave::class, 'approver_id');
     }
 
-    public function overtimes(): HasMany
-    {
-        return $this->hasMany(Overtime::class, 'user_id');
-    }
-
-    public function overtimesToApprove(): HasMany
-    {
-        return $this->hasMany(Overtime::class, 'approver_id');
-    }
-
-    public function managedProjects(): HasMany
-    {
-        return $this->hasMany(Project::class, 'pm_id');
-    }
 
     public function standups(): HasMany
     {
