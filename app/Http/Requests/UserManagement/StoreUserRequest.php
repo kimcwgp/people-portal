@@ -33,6 +33,10 @@ class StoreUserRequest extends FormRequest
                 'string',
                 'min:8',
             ],
+            'position_id' => [
+                'required',
+                'exists:positions,id',
+            ],
             'role_id' => [
                 'required',
                 'exists:roles,id',
@@ -45,14 +49,23 @@ class StoreUserRequest extends FormRequest
                 'nullable',
                 'exists:teams,id',
             ],
-            'shift_id' => [
+            'shift_type' => [
                 'nullable',
-                'exists:shifts,id',
+                'string',
+            ],
+            'start_time' => [
+                'nullable'
+            ],
+            'end_time' => [
+                'nullable'
             ],
             'immediate_sup_id' => [
                 'nullable',
                 'exists:users,id',
                 'different:id', 
+            ],
+            'employee_leave_type' => [
+                'nullable'
             ],
         ];
     }
@@ -62,10 +75,14 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => 'full name',
             'email' => 'email address',
+            'position_id' => 'position',
             'role_id' => 'role',
             'team_id' => 'team',
-            'shift_id' => 'shift',
+            'shift_type' => 'shift',
+            'start_time' => 'start time',
+            'end_time' => 'end time',
             'immediate_sup_id' => 'immediate supervisor',
+            'employee_leave_type' => 'employee leave type',
         ];
     }
 
@@ -76,12 +93,17 @@ class StoreUserRequest extends FormRequest
             'email.email' => 'Please provide a valid email address.',
             'email.unique' => 'This email address is already registered.',
             'password.min' => 'Password must be at least 8 characters long.',
+            'position_id.required' => 'Please select a position for this user.',
+            'position_id.exists' => 'The selected position does not exist.',
             'role_id.required' => 'Please select a role for this user.',
             'role_id.exists' => 'The selected role does not exist.',
             'immediate_sup_id.exists' => 'The selected supervisor does not exist.',
             'immediate_sup_id.different' => 'A user cannot be their own supervisor.',
             'team_id.exists' => 'The selected team does not exist.',
-            'shift_id.exists' => 'The selected shift does not exist.',
+            'shift_type.exists' => 'The selected shift does not exist.',
+            'start_time.exists' => 'Start time does not exist.',
+            'end_time.exists' => 'End time does not exist.',
+            'employee_leave_type.exists' => 'Leave type does not exist.',
         ];
     }
 
@@ -95,10 +117,14 @@ class StoreUserRequest extends FormRequest
 
         $this->merge([
             'password' => $this->password ?: null,
+            'position_id' => $this->position_id ?: null,
             'role_id' => $this->role_id ?: null,
             'team_id' => $this->team_id ?: null,
-            'shift_id' => $this->shift_id ?: null,
+            'shift_type' => $this->shift_type ?: null,
+            'start_time' => $this->start_time ?: null,
+            'end_time' => $this->end_time ?: null,
             'immediate_sup_id' => $this->immediate_sup_id ?: null,
+            'employee_leave_type' => $this->employee_leave_type ?: null,
         ]);
     }
 

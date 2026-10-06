@@ -13,7 +13,6 @@
         Add Employee
       </button>
     </div>
-
     <!-- Stats Cards -->
     <div v-if="stats" class="grid grid-cols-4 md:grid-cols-4 gap-4">
       <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
@@ -36,7 +35,7 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-      <div class="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-7 gap-4">
+      <div class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-4">
 
         <!-- User Filter -->
         <div class="relative">
@@ -392,7 +391,7 @@
       <!-- Users Table -->
       <div class="bg-white rounded-xl mt-4 shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="rounded-xl w-full border-1 border-[#000]">
+          <table class="rounded-xl w-full">
             <thead class="bg-[var(--title-background)] text-[var(--heading)]">
               <tr>
                 <th class="text-sm text-left p-4 font-semibold">User</th>
@@ -635,11 +634,11 @@
 
     <!-- Create/Edit User Modal -->
     <div v-if="showCreateModal || showEditModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="absolute inset-0 bg-black/50" @click="closeModal"></div>
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal"></div>
       <div class="relative bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-semibold text-gray-900">
-            {{ showEditModal ? 'Edit User' : 'Create New User' }}
+            {{ showEditModal ? 'Edit User' : 'Add Employee' }}
           </h3>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -650,88 +649,168 @@
 
         <form @submit.prevent="saveUser" class="space-y-4">
           <!-- Name -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+          <div class="relative">
             <input
               v-model="userForm.name"
               type="text"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="John Doe"
-            >
+              placeholder="FN, MN, LN"
+              class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl placeholder:text-gray-500 focus:outline-none focus:border-blue-500 ocus:ring-1 focus:ring-blue-500" />
+
+            <label
+              class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Full Name *</label>
           </div>
 
+
           <!-- Email -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+          <div class="relative">
             <input
               v-model="userForm.email"
               type="email"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="john@example.com"
+              class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl placeholder:text-gray-500 focus:outline-none focus:border-blue-500 ocus:ring-1 focus:ring-blue-500"
+              placeholder="email@cwglobalpeople.com"
             >
+            <label
+              class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Email *</label>
+          </div>
+
+          <!-- Position Selection -->
+          <div class="relative">
+            <select
+              v-model="userForm.position_id"
+              required
+              class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl placeholder:text-gray-500 focus:outline-none focus:border-blue-500 ocus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">No Position</option>
+              <option v-for="pos in filterOptions.positions" :key="pos.id" :value="pos.id">
+                {{ pos.name }}
+              </option>
+            </select>
+            <label
+              class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Position *</label>
           </div>
 
           <!-- Role Selection -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+          <div class="relative">
             <select
               v-model="userForm.role_id"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl placeholder:text-gray-500 focus:outline-none focus:border-blue-500 ocus:ring-1 focus:ring-blue-500"
             >
               <option value="">Select a role</option>
               <option v-for="role in filterOptions.roles" :key="role.id" :value="role.id">
                 {{ role.name }}
               </option>
             </select>
+            <label
+              class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Role *</label>
           </div>
 
           <!-- Team -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Team</label>
+          <div class="relative">
             <select
               v-model="userForm.team_id"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl placeholder:text-gray-500 focus:outline-none focus:border-blue-500 ocus:ring-1 focus:ring-blue-500"
             >
               <option value="">No team</option>
               <option v-for="team in filterOptions.teams" :key="team.id" :value="team.id">
                 {{ team.name }}
               </option>
             </select>
-          </div>
-
-          <!-- Shift -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Shift</label>
-            <select
-              v-model="userForm.shift_id"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">No shift</option>
-              <option v-for="shift in filterOptions.shifts" :key="shift.id" :value="shift.id">
-                {{ shift.label }}
-              </option>
-            </select>
+            <label
+              class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Team</label>
           </div>
 
           <!-- Supervisor -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Supervisor</label>
+          <div class="relative">
             <select
               v-model="userForm.immediate_sup_id"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl placeholder:text-gray-500 focus:outline-none focus:border-blue-500 ocus:ring-1 focus:ring-blue-500"
             >
               <option value="">No supervisor</option>
               <option v-for="supervisor in filterOptions.supervisors" :key="supervisor.id" :value="supervisor.id">
                 {{ supervisor.name }}
               </option>
             </select>
+            <label
+              class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Supervisor</label>
+          </div>
+
+          <!-- Shift -->
+          <div class="flex items-center gap-6">
+            <label class="block px-1 text-sm font-medium text-gray-400">Shift</label>
+
+            <div class="flex items-center gap-5">
+              <label
+                v-for="shiftType in shift_types"
+                :key="shiftType"
+                class="flex items-center gap-2 cursor-pointer capitalize"
+              >
+                <input
+                  v-model="userForm.shift_type"
+                  type="radio"
+                  :value="shiftType"
+                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                >
+                <span class="text-sm text-gray-400">
+                  {{ shiftType }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Time In / Time Out -->
+          <div class="flex items-center gap-6">
+            <!-- Time In -->
+            <div class="relative flex-1">
+              <input
+                v-model="userForm.start_time"
+                type="time"
+                required
+                class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"/>
+
+              <label class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Time In *</label>
+            </div>
+
+            <!-- Time Out -->
+            <div class="relative flex-1">
+              <input
+                v-model="userForm.end_time"
+                type="time"
+                required
+                class="w-full h-16 px-4 bg-white text-gray-700 text-base border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"/>
+
+              <label class="absolute left-3 top-0 -translate-y-1/2 px-1 bg-white text-sm text-gray-400">Time Out *</label>
+            </div>
+          </div>
+
+
+          <!-- Leave Types -->
+          <div class="flex items-center gap-6">
+            <label class="block px-1 text-sm font-medium text-gray-400">Leave Types</label>
+
+            <div class="flex items-center gap-5">
+              <label
+                v-for="leaveType in leave_types"
+                :key="leaveType"
+                class="flex items-center gap-2 cursor-pointer capitalize"
+              >
+                <input
+                  v-model="userForm.employee_leave_type"
+                  type="radio"
+                  :value="leaveType"
+                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                >
+                <span class="text-sm text-gray-400">
+                  {{ leaveType }}
+                </span>
+              </label>
+            </div>
           </div>
 
           <!-- Status -->
-          <div>
+          <!-- <div>
             <label class="flex items-center gap-2">
               <input
                 v-model="userForm.status"
@@ -740,22 +819,22 @@
               >
               <span class="text-sm font-medium text-gray-700">Active</span>
             </label>
-          </div>
+          </div> -->
 
           <!-- Submit Buttons -->
           <div class="flex gap-3 pt-4">
             <button
               type="submit"
               :disabled="userLoading"
-              class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              class="flex-1 px-6 py-3 bg-[var(--blue-btn)] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold"
             >
               <span v-if="userLoading">Saving...</span>
-              <span v-else>{{ showEditModal ? 'Update User' : 'Create User' }}</span>
+              <span v-else>{{ showEditModal ? 'Update' : 'Add' }}</span>
             </button>
             <button
               type="button"
               @click="closeModal"
-              class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+              class="flex-1 px-6 py-3 bg-[var(--gray-btn)]/[2%] text-gray-700 rounded-lg font-bold"
             >
               Cancel
             </button>
@@ -929,6 +1008,8 @@ export default {
     const loading = ref(false)
     const userLoading = ref(false)
     const users = ref([])
+    const shift_types = ref([])
+    const leave_types = ref([])
     const stats = ref(null)
     const filterOptions = ref({
       users: [],
@@ -960,7 +1041,7 @@ export default {
       client_id: '',
       employee_leave_type: '',
       employment_status: '',
-      shift_id: '',
+      shift_type: '',
       role_id: '',
       status: '',
       supervisor_id: '',
@@ -977,7 +1058,9 @@ export default {
       client_id: '',
       employee_leave_type: '',
       employment_status: '',
-      shift_id: '',
+      shift_type: '',
+      start_time: '',
+      end_time: '',
       immediate_sup_id: '',
       status: true
     })
@@ -1050,6 +1133,8 @@ export default {
           to: response.data.users.to
         }
         stats.value = response.data.stats
+        shift_types.value = response.data.shift_types
+        leave_types.value = response.data.leave_types
         filterOptions.value = response.data.filters
       } catch (error) {
         showNotification('Failed to load users', 'error')
@@ -1066,6 +1151,17 @@ export default {
         filterOptions.value.roles = response.data.roles || []
       } catch (error) {
         console.error('Failed to load roles:', error)
+      }
+    }
+
+    const fetchPositions = async () => {
+      try {
+        const response = await axios.get('/position', {
+          params: { per_page: 100 }
+        })
+        filterOptions.value.positions = response.data.position || []
+      } catch (error) {
+        console.error('Failed to load positions:', error)
       }
     }
 
@@ -1099,28 +1195,33 @@ export default {
 
     const openCreateModal = async () => {
       await fetchRoles()
+      await fetchPositions()
       resetForm()
       showCreateModal.value = true
     }
 
     const editUser = async (user) => {
       await fetchRoles()
+      await fetchPositions()
       selectedUser.value = user
-      
+      showEditModal.value = true
       try {
         // Fetch fresh user data from API to get current roles
         const response = await axios.get(`/users/${user.id}`)
         const userData = response.data.user
-        
+        console.log(userData);
         userForm.name = userData.name
         userForm.email = userData.email
         userForm.password = ''
         userForm.role_id = userData.roles && userData.roles.length > 0 ? userData.roles[0].id : ''
         userForm.team_id = userData.team_id || ''
-        userForm.position_id = userData.position_id || ''
+        userForm.position_id = userData.position.id || ''
         userForm.client_id = userData.client_id || ''
-        userForm.shift_id = userData.shift_id || ''
+        userForm.shift_type = userData.shift.shift_type || ''
+        userForm.start_time = convertToTimeInput(userData.shift?.start_time)
+        userForm.end_time = convertToTimeInput(userData.shift?.end_time)
         userForm.immediate_sup_id = userData.immediate_sup_id || ''
+        userForm.employee_leave_type = userData.employee_leave_type || ''
         userForm.status = userData.status
       } catch (error) {
         // Fallback to user object data if API fails
@@ -1129,18 +1230,21 @@ export default {
         userForm.password = ''
         userForm.role_id = user.roles && user.roles.length > 0 ? user.roles[0].id : ''
         userForm.team_id = user.team_id || ''
-        userForm.position_id = user.position_id || ''
-        userForm.client_id = userData.client_id || ''
-        userForm.shift_id = user.shift_id || ''
+        userForm.position_id = user.position.id || ''
+        userForm.client_id = user.client_id || ''
+        userForm.shift_type = user.shift.shift_type || ''
+        userForm.start_time = user.shift.start_time || ''
+        userForm.end_time = user.shift.end_time || ''
         userForm.immediate_sup_id = user.immediate_sup_id || ''
+        userForm.employee_leave_type = user.employee_leave_type || ''
         userForm.status = user.status
       }
       
-      showEditModal.value = true
     }
 
     const viewUser = async (user) => {
       await fetchRoles()
+      await fetchPositions()
       selectedUser.value = user
       showViewModal.value = true
     }
@@ -1205,19 +1309,42 @@ export default {
       userForm.name = ''
       userForm.email = ''
       userForm.password = ''
+      userForm.position_id = ''
       userForm.role_id = ''
       userForm.team_id = ''
       userForm.position_id = ''
       userForm.client_id = ''
-      userForm.shift_id = ''
+      userForm.shift_type = ''
+      userForm.start_time = ''
+      userForm.end_time = ''
       userForm.immediate_sup_id = ''
       userForm.status = true
+      userForm.employee_leave_type = ''
     }
 
+    const convertToTimeInput = (time) => {
+      if (!time) return ''
+
+      const [timePart, modifier] = time.split(' ')
+      let [hours, minutes] = timePart.split(':')
+
+      hours = parseInt(hours)
+
+      if (modifier === 'PM' && hours !== 12) {
+        hours += 12
+      }
+
+      if (modifier === 'AM' && hours === 12) {
+        hours = 0
+      }
+
+      return `${String(hours).padStart(2, '0')}:${minutes}`
+    }
 
     onMounted(() => {
       fetchUsers()
       fetchRoles()
+      fetchPositions()
     })
 
     return {
@@ -1225,6 +1352,8 @@ export default {
       userLoading,
       users,
       stats,
+      shift_types,
+      leave_types,
       filterOptions,
       perPage,
       pagination,

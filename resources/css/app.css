@@ -193,6 +193,11 @@
     --heading: #3E404E;
     --subheading: #8C91A4;
 
+    /* Blues */
+    --blue-btn: #160B6A;
+
+    /* Grays */
+    --gray-btn: #090909;
 }
 
 html {

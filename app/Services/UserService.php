@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{User, Team, Employee};
+use App\Models\{User, Team, Employee, Shift};
 use Illuminate\Support\Facades\{DB, Hash};
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -66,7 +66,7 @@ class UserService
                 app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
             }
 
-            // Auto-create employee record (except for super admin)
+            // Auto-create employee and shift record (except for super admin)
             if ($user->email !== 'superadmin@example.com') {
                 $hireDate = $data['hire_date'] ?? \Carbon\Carbon::now();
                 $year = \Carbon\Carbon::parse($hireDate)->year;
@@ -78,8 +78,17 @@ class UserService
                     'hire_date' => $hireDate,
                     'employee_status' => 'active',
                     'employment_status' => $data['employment_status'] ?? 'Probationary',
+                    'employee_leave_type' => $data['employee_leave_type'] ?? '',
                     'employment_type' => $data['employment_type'] ?? 'full_time',
                 ]);
+
+                \App\Models\Shift::create([
+                    'user_id' => $user->id,
+                    'shift_type' => $data['shift_type'] ?? '',
+                    'start_time' => !empty($data['start_time']) ? $data['start_time'] . ':00' : null,
+                    'end_time' => !empty($data['end_time']) ? $data['end_time'] . ':00' : null,
+                ]);
+
             }
 
             DB::commit();
@@ -96,35 +105,70 @@ class UserService
         DB::beginTransaction();
 
         try {
+            // Password
             if (isset($data['password']) && !empty($data['password'])) {
                 $data['password'] = Hash::make($data['password']);
             } else {
                 unset($data['password']);
             }
 
+            // Validate supervisor assignment
             if (isset($data['immediate_sup_id']) && $data['immediate_sup_id']) {
                 if (!$this->validateSupervisorAssignment($user->id, $data['immediate_sup_id'])) {
-                    throw new \Exception('Invalid supervisor assignment. This would create a circular reference.');
+                    throw new \Exception(
+                        'Invalid supervisor assignment. This would create a circular reference.'
+                    );
                 }
             }
 
+            // Update User
             $user->update($data);
 
+            // Update Role
             if (isset($data['role_id'])) {
                 $role = Role::findById($data['role_id'], 'sanctum');
+
                 $user->syncRoles([$role]);
 
-                app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+                app(\Spatie\Permission\PermissionRegistrar::class)
+                    ->forgetCachedPermissions();
+            }
+
+            // Update Employee
+            $employee = \App\Models\Employee::where('user_id', $user->id)->first();
+
+            if ($employee) {
+                $employee->update([
+                    'employee_leave_type' => $data['employee_leave_type'] ?? $employee->employee_leave_type,
+                ]);
+            }
+
+            // Update Shift
+            $shift = \App\Models\Shift::where('user_id', $user->id)->first();
+
+            if ($shift) {
+                $shift->update([
+                    'shift_type' => $data['shift_type'] ?? $shift->shift_type,
+                    'start_time' => !empty($data['start_time'])
+                        ? $data['start_time'] . ':00'
+                        : null,
+                    'end_time' => !empty($data['end_time'])
+                        ? $data['end_time'] . ':00'
+                        : null,
+                ]);
             }
 
             DB::commit();
 
             return $user->fresh();
+
         } catch (\Exception $e) {
             DB::rollBack();
+
             throw $e;
         }
     }
+
 
     public function deleteUser(User $user): void
     {

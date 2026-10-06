@@ -10,6 +10,7 @@ use App\Traits\HasPagination;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -40,6 +41,8 @@ class UserController extends Controller
                 'data' => UserResource::collection($users->items()),
             ],
             'filters' => $this->getFilterOptions(),
+            'shift_types' => $this->getShiftTypes(),
+            'leave_types' => $this->getLeaveTypes(),
             'stats' => $this->userService->getUserStats(),
         ]);
     }
@@ -195,7 +198,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
-                'user' => new UserResource($user->load(['team', 'shift', 'immediateSupervisor', 'roles', 'position']))
+                'user' => new UserResource($user->load(['team', 'shift', 'immediateSupervisor', 'roles', 'position', 'employee']))
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -207,7 +210,7 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
-        $user->load(['team', 'psotion', 'shift', 'immediateSupervisor', 'directSubordinates', 'roles', 'position']);
+        $user->load(['team', 'shift', 'immediateSupervisor', 'directSubordinates', 'roles', 'position']);
         
         return response()->json([
             'user' => new UserResource($user),
@@ -224,7 +227,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User updated successfully',
-                'user' => new UserResource($updatedUser->load(['team', 'shift', 'immediateSupervisor', 'roles', 'position']))
+                'user' => new UserResource($updatedUser->load(['team', 'shift', 'immediateSupervisor', 'roles', 'position', 'employee']))
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -319,4 +322,39 @@ class UserController extends Controller
                 : 'Invalid supervisor assignment. This would create a circular reference.'
         ]);
     }
+
+    private function getShiftTypes(): array
+    {
+        $column = DB::selectOne("SHOW COLUMNS FROM shifts WHERE Field = 'shift_type'");
+
+        if (!$column || !isset($column->Type)) {
+            return [];
+        }
+
+        preg_match("/^enum\((.*)\)$/", $column->Type, $matches);
+
+        if (!isset($matches[1])) {
+            return [];
+        }
+
+        return str_getcsv($matches[1], ',', "'");
+    }
+
+    private function getLeaveTypes(): array
+    {
+        $column = DB::selectOne("SHOW COLUMNS FROM employees WHERE Field = 'employee_leave_type'");
+
+        if (!$column || !isset($column->Type)) {
+            return [];
+        }
+
+        preg_match("/^enum\((.*)\)$/", $column->Type, $matches);
+
+        if (!isset($matches[1])) {
+            return [];
+        }
+
+        return str_getcsv($matches[1], ',', "'");
+    }
+
 }
